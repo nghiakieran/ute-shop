@@ -1,6 +1,6 @@
 type User = {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
   phone?: string;
   avatar?: string;
@@ -10,9 +10,11 @@ type User = {
 };
 
 type UpdateProfilePayload = {
-  name?: string;
-  email?: string;
-  phone?: string;
-  avatar?: string;
+  fullName?: string;
 };
 
+type ChangePasswordPayload = {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};

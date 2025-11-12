@@ -1,39 +1,41 @@
 /**
  * useToast hook for toast notifications
+ * Uses react-hot-toast for notifications
  */
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import toast from 'react-hot-toast';
 
 export interface ToastProps {
   title?: string;
   description?: string;
-  variant?: 'default' | 'destructive';
+  variant?: 'default' | 'destructive' | 'success';
 }
 
-let toastTimeout: NodeJS.Timeout | null = null;
-
 export const useToast = () => {
-  const [toastState, setToastState] = useState<ToastProps | null>(null);
+  const toastFn = useCallback(({ title, description, variant = 'default' }: ToastProps) => {
+    const message = description || title || 'Notification';
 
-  const toast = useCallback(({ title, description, variant = 'default' }: ToastProps) => {
-    setToastState({ title, description, variant });
-
-    // Auto dismiss after 3 seconds
-    if (toastTimeout) {
-      clearTimeout(toastTimeout);
+    switch (variant) {
+      case 'destructive':
+        toast.error(message, {
+          position: 'top-right',
+          duration: 4000,
+        });
+        break;
+      case 'success':
+        toast.success(message, {
+          position: 'top-right',
+          duration: 3000,
+        });
+        break;
+      default:
+        toast(message, {
+          position: 'top-right',
+          duration: 3000,
+        });
     }
-    toastTimeout = setTimeout(() => {
-      setToastState(null);
-    }, 3000);
   }, []);
 
-  const dismiss = useCallback(() => {
-    setToastState(null);
-    if (toastTimeout) {
-      clearTimeout(toastTimeout);
-    }
-  }, []);
-
-  return { toast, toastState, dismiss };
+  return { toast: toastFn };
 };
-

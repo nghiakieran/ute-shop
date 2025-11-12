@@ -19,7 +19,7 @@ const ProfilePage = () => {
   const updateSuccess = useAppSelector(selectUpdateProfileSuccess);
 
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    fullName: user?.fullName || '',
     email: user?.email || '',
     phone: user?.phone || '',
   });
@@ -27,7 +27,7 @@ const ProfilePage = () => {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || '',
+        fullName: user.fullName || '',
         email: user.email || '',
         phone: user.phone || '',
       });
@@ -36,7 +36,7 @@ const ProfilePage = () => {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    dispatch(updateProfile(formData));
+    dispatch(updateProfile({ fullName: formData.fullName }));
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -66,17 +66,17 @@ const ProfilePage = () => {
                   {user.avatar ? (
                     <img
                       src={user.avatar}
-                      alt={user.name}
+                      alt={user.fullName}
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
                     <span className="text-3xl font-bold text-accent-foreground">
-                      {user?.name?.charAt(0).toUpperCase()}
+                      {user?.fullName?.charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div>
-                  <h1 className="text-3xl font-serif font-bold">{user?.name}</h1>
+                  <h1 className="text-3xl font-serif font-bold">{user?.fullName}</h1>
                   <p className="text-muted-foreground">{user?.email}</p>
                 </div>
               </div>
@@ -95,11 +95,11 @@ const ProfilePage = () => {
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="fullName">Full Name *</Label>
                   <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
+                    id="fullName"
+                    name="fullName"
+                    value={formData.fullName}
                     onChange={handleChange}
                     placeholder="John Doe"
                     required
@@ -107,15 +107,15 @@ const ProfilePage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     name="email"
                     type="email"
                     value={formData.email}
-                    onChange={handleChange}
                     placeholder="john@example.com"
-                    required
+                    disabled
+                    className="bg-gray-100 cursor-not-allowed"
                   />
                 </div>
 
@@ -125,8 +125,9 @@ const ProfilePage = () => {
                     id="phone"
                     name="phone"
                     value={formData.phone}
-                    onChange={handleChange}
                     placeholder="+1234567890"
+                    disabled
+                    className="bg-gray-100 cursor-not-allowed"
                   />
                 </div>
 
@@ -135,7 +136,7 @@ const ProfilePage = () => {
                   disabled={loading}
                   className="w-full"
                 >
-                  {loading ? 'Updating...' : 'Update Profile'}
+                  {loading ? 'Updating...' : 'Update Full Name'}
                 </Button>
               </form>
             </motion.div>

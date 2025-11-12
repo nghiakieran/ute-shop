@@ -11,7 +11,7 @@ import { getUserProfile } from './auth.slice';
 export interface UserSliceState {
   loading: boolean;
   error: string | null;
-  
+
   updateProfileSuccess: boolean;
   changePasswordSuccess: boolean;
   uploadAvatarSuccess: boolean;
@@ -20,7 +20,7 @@ export interface UserSliceState {
 const initialState: UserSliceState = {
   loading: false,
   error: null,
-  
+
   updateProfileSuccess: false,
   changePasswordSuccess: false,
   uploadAvatarSuccess: false,
@@ -30,18 +30,13 @@ export const userSlice = createAppSlice({
   name: 'user',
   initialState,
   reducers: (create) => ({
-    // ==================== UPDATE PROFILE ====================
     updateProfile: create.asyncThunk(
       async (payload: UpdateProfilePayload, { dispatch, rejectWithValue }) => {
         try {
-          const response = await apiClient.put<User>(
-            API_ENDPOINTS.UPDATE_PROFILE,
-            payload
-          );
-          
-          // Refresh user profile after update
+          const response = await apiClient.patch<User>(API_ENDPOINTS.UPDATE_PROFILE, payload);
+
           await dispatch(getUserProfile());
-          
+
           return response.data.data;
         } catch (error: any) {
           return rejectWithValue(error.message);
@@ -65,14 +60,10 @@ export const userSlice = createAppSlice({
       }
     ),
 
-    // ==================== CHANGE PASSWORD ====================
     changePassword: create.asyncThunk(
       async (payload: ChangePasswordPayload, { rejectWithValue }) => {
         try {
-          const response = await apiClient.post(
-            API_ENDPOINTS.CHANGE_PASSWORD,
-            payload
-          );
+          const response = await apiClient.post(API_ENDPOINTS.CHANGE_PASSWORD, payload);
           return response.data;
         } catch (error: any) {
           return rejectWithValue(error.message);
@@ -96,11 +87,9 @@ export const userSlice = createAppSlice({
       }
     ),
 
-    // ==================== UPLOAD AVATAR ====================
     uploadAvatar: create.asyncThunk(
       async (file: File, { dispatch, rejectWithValue }) => {
         try {
-          // Convert file to base64
           const base64 = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result as string);
@@ -108,12 +97,10 @@ export const userSlice = createAppSlice({
             reader.readAsDataURL(file);
           });
 
-          const response = await apiClient.post<User>(
-            API_ENDPOINTS.UPLOAD_AVATAR,
-            { avatar: base64 }
-          );
+          const response = await apiClient.post<User>(API_ENDPOINTS.UPLOAD_AVATAR, {
+            avatar: base64,
+          });
 
-          // Refresh user profile after upload
           await dispatch(getUserProfile());
 
           return response.data.data;
@@ -139,7 +126,6 @@ export const userSlice = createAppSlice({
       }
     ),
 
-    // ==================== RESET STATE ====================
     resetUpdateProfileState: create.reducer((state) => {
       state.updateProfileSuccess = false;
       state.error = null;
@@ -160,7 +146,6 @@ export const userSlice = createAppSlice({
     }),
   }),
 
-  // Selectors
   selectors: {
     selectUserLoading: (state) => state.loading,
     selectUserError: (state) => state.error,
@@ -170,7 +155,6 @@ export const userSlice = createAppSlice({
   },
 });
 
-// Export actions
 export const {
   updateProfile,
   changePassword,
@@ -192,4 +176,3 @@ export const {
 
 // Export reducer
 export default userSlice.reducer;
-
