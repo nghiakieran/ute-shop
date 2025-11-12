@@ -3,14 +3,15 @@
  * Root component
  */
 
+import { Toaster } from 'react-hot-toast';
 import { AppRoutes } from './routes';
-import { ToastProvider } from './components/Toast';
 
 function App() {
   return (
-    <ToastProvider>
+    <>
       <AppRoutes />
-    </ToastProvider>
+      <Toaster position="top-right" />
+    </>
   );
 }
 

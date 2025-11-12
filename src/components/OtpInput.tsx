@@ -7,7 +7,9 @@ import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { Input } from '@/components/Input';
 
 interface OtpInputProps {
-  onChange: (otp: string[]) => void;
+  length?: number;
+  onChange?: (otp: string[]) => void;
+  onComplete?: (otp: string) => void;
   disabled?: boolean;
   error?: boolean;
 }
@@ -15,11 +17,12 @@ interface OtpInputProps {
 export interface OtpInputRef {
   focusInput: (index: number) => void;
   reset: () => void;
+  getOtp: () => string;
 }
 
 export const OtpInput = forwardRef<OtpInputRef, OtpInputProps>(
-  ({ onChange, disabled, error }, ref) => {
-    const [otp, setOtp] = useState<string[]>(new Array(6).fill(''));
+  ({ length = 6, onChange, onComplete, disabled, error }, ref) => {
+    const [otp, setOtp] = useState<string[]>(new Array(length).fill(''));
     const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
     useImperativeHandle(ref, () => ({
@@ -29,8 +32,11 @@ export const OtpInput = forwardRef<OtpInputRef, OtpInputProps>(
         }
       },
       reset() {
-        setOtp(new Array(6).fill(''));
+        setOtp(new Array(length).fill(''));
         inputsRef.current[0]?.focus();
+      },
+      getOtp() {
+        return otp.join('');
       },
     }));
 
@@ -41,11 +47,16 @@ export const OtpInput = forwardRef<OtpInputRef, OtpInputProps>(
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
-      onChange(newOtp);
+      onChange?.(newOtp);
 
       // Auto-focus next input
       if (value && index < otp.length - 1) {
         inputsRef.current[index + 1]?.focus();
+      }
+
+      // Call onComplete if all digits are filled
+      if (value && index === otp.length - 1 && newOtp.every(digit => digit !== '')) {
+        onComplete?.(newOtp.join(''));
       }
     };
 
@@ -62,7 +73,7 @@ export const OtpInput = forwardRef<OtpInputRef, OtpInputProps>(
           const newOtp = [...otp];
           newOtp[index] = '';
           setOtp(newOtp);
-          onChange(newOtp);
+          onChange?.(newOtp);
         }
       }
     };
@@ -71,13 +82,15 @@ export const OtpInput = forwardRef<OtpInputRef, OtpInputProps>(
       e.preventDefault();
       const pastedData = e.clipboardData.getData('text').trim();
 
-      // Only process if it's 6 digits
-      if (/^\d{6}$/.test(pastedData)) {
+      // Only process if it matches the length
+      const regex = new RegExp(`^\\d{${length}}$`);
+      if (regex.test(pastedData)) {
         const newOtp = pastedData.split('');
         setOtp(newOtp);
-        onChange(newOtp);
+        onChange?.(newOtp);
+        onComplete?.(pastedData);
         // Focus last input
-        inputsRef.current[5]?.focus();
+        inputsRef.current[length - 1]?.focus();
       }
     };
 

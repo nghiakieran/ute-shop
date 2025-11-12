@@ -4,13 +4,11 @@ type LoginCredentials = {
 };
 
 type RegisterPayload = {
-  name: string;
+  fullName: string;
   email: string;
   password: string;
-  confirmPassword: string;
-  fullName?: string;
-  phone?: string;
-  agreedToTerms?: boolean;
+  // confirmPassword is for FE validation only, not sent to API
+  confirmPassword?: string;
 };
 
 type AuthResponse = {
@@ -25,6 +23,8 @@ type ForgotPasswordPayload = {
 
 type VerifyOtpPayload = {
   email: string;
+  password: string;
+  fullName: string;
   otp: string;
 };
 
@@ -34,4 +34,3 @@ type ResetPasswordPayload = {
   newPassword: string;
   confirmPassword: string;
 };
-

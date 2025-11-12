@@ -14,13 +14,15 @@ export interface AuthSliceState {
   user: User | null;
   error: string | null;
   accessToken: string | null;
-  
-  // Register flow
-  registerSuccess: boolean;
-  
+
+  // Register flow - cần verify OTP
+  registerEmail: string | null;
+  registerPassword: string | null;
+  registerName: string | null;
+  needsVerification: boolean;
+
   // Forgot password flow
   forgotPasswordSent: boolean;
-  otpVerified: boolean;
   resetPasswordSuccess: boolean;
   otpError: string | null;
 }
@@ -31,11 +33,13 @@ const initialState: AuthSliceState = {
   user: storageUtils.getUserData(),
   error: null,
   accessToken: storageUtils.getAccessToken(),
-  
-  registerSuccess: false,
-  
+
+  registerEmail: null,
+  registerPassword: null,
+  registerName: null,
+  needsVerification: false,
+
   forgotPasswordSent: false,
-  otpVerified: false,
   resetPasswordSuccess: false,
   otpError: null,
 };
@@ -48,19 +52,12 @@ export const authSlice = createAppSlice({
     loginUser: create.asyncThunk(
       async (credentials: LoginCredentials, { rejectWithValue }) => {
         try {
-          // 🔧 MOCK MODE - Comment this out when backend is ready
-          const { mockAuthUtils } = await import('@/utils/mock-auth.utils');
-          const mockResponse = await mockAuthUtils.login(credentials.email, credentials.password);
-          return mockResponse;
-          
-          // 🔧 REAL API - Uncomment when backend is ready
-          // const response = await apiClient.post<AuthResponse>(
-          //   API_ENDPOINTS.LOGIN,
-          //   credentials
-          // );
-          // return response.data.data;
+          const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.LOGIN, credentials);
+          return response.data.data;
         } catch (error: any) {
-          return rejectWithValue(error.message || MESSAGES.LOGIN_FAILED);
+          // Handle different error formats from apiClient
+          const errorMessage = error?.message || error?.data?.message || MESSAGES.LOGIN_FAILED;
+          return rejectWithValue(errorMessage);
         }
       },
       {
@@ -74,7 +71,7 @@ export const authSlice = createAppSlice({
           state.user = action.payload.user;
           state.accessToken = action.payload.accessToken;
           state.error = null;
-          
+
           // Save to localStorage
           storageUtils.setAccessToken(action.payload.accessToken);
           if (action.payload.refreshToken) {
@@ -95,17 +92,19 @@ export const authSlice = createAppSlice({
     registerUser: create.asyncThunk(
       async (payload: RegisterPayload, { rejectWithValue }) => {
         try {
-          // 🔧 MOCK MODE - Comment this out when backend is ready
-          const { mockAuthUtils } = await import('@/utils/mock-auth.utils');
-          const mockResponse = await mockAuthUtils.register(payload.name, payload.email, payload.password);
-          return mockResponse;
-          
-          // 🔧 REAL API - Uncomment when backend is ready
-          // const response = await apiClient.post<AuthResponse>(
-          //   API_ENDPOINTS.REGISTER,
-          //   payload
-          // );
-          // return response.data.data;
+          // Only send fullName, email, password to API (not confirmPassword)
+          const registerData = {
+            fullName: payload.fullName,
+            email: payload.email,
+            password: payload.password,
+          };
+          const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.REGISTER, registerData);
+          return {
+            ...response.data.data,
+            email: payload.email,
+            password: payload.password,
+            fullName: payload.fullName,
+          };
         } catch (error: any) {
           return rejectWithValue(error.message || MESSAGES.REGISTER_FAILED);
         }
@@ -114,26 +113,63 @@ export const authSlice = createAppSlice({
         pending: (state) => {
           state.loading = true;
           state.error = null;
-          state.registerSuccess = false;
+          state.needsVerification = false;
         },
         fulfilled: (state, action) => {
           state.loading = false;
-          state.registerSuccess = true;
+          state.needsVerification = true;
+          state.registerEmail = action.payload.email;
+          state.registerPassword = action.payload.password;
+          state.registerName = action.payload.fullName;
+        },
+        rejected: (state, action) => {
+          state.loading = false;
+          state.needsVerification = false;
+          state.error = action.payload as string;
+        },
+      }
+    ),
+
+    // ==================== VERIFY ACCOUNT ====================
+    verifyAccount: create.asyncThunk(
+      async (payload: VerifyOtpPayload, { rejectWithValue }) => {
+        try {
+          const response = await apiClient.post<AuthResponse>(
+            API_ENDPOINTS.VERIFY_ACCOUNT,
+            payload
+          );
+          return response.data.data;
+        } catch (error: any) {
+          return rejectWithValue(error.message || 'Xác thực OTP thất bại');
+        }
+      },
+      {
+        pending: (state) => {
+          state.loading = true;
+          state.otpError = null;
+        },
+        fulfilled: (state, action) => {
+          state.loading = false;
+          state.needsVerification = false;
           state.isAuthenticated = true;
           state.user = action.payload.user;
           state.accessToken = action.payload.accessToken;
-          
+
           // Save to localStorage
           storageUtils.setAccessToken(action.payload.accessToken);
           if (action.payload.refreshToken) {
             storageUtils.setRefreshToken(action.payload.refreshToken);
           }
           storageUtils.setUserData(action.payload.user);
+
+          // Clear register data
+          state.registerEmail = null;
+          state.registerPassword = null;
+          state.registerName = null;
         },
         rejected: (state, action) => {
           state.loading = false;
-          state.registerSuccess = false;
-          state.error = action.payload as string;
+          state.otpError = action.payload as string;
         },
       }
     ),
@@ -158,7 +194,7 @@ export const authSlice = createAppSlice({
           state.user = null;
           state.accessToken = null;
           state.error = null;
-          
+
           // Clear localStorage
           storageUtils.clearAuth();
         },
@@ -167,7 +203,7 @@ export const authSlice = createAppSlice({
           state.isAuthenticated = false;
           state.user = null;
           state.accessToken = null;
-          
+
           // Clear localStorage anyway
           storageUtils.clearAuth();
         },
@@ -193,14 +229,14 @@ export const authSlice = createAppSlice({
           state.loading = false;
           state.user = action.payload;
           state.isAuthenticated = true;
-          
+
           // Update localStorage
           storageUtils.setUserData(action.payload);
         },
         rejected: (state, action) => {
           state.loading = false;
           state.error = action.payload as string;
-          
+
           // If profile fetch fails, user is not authenticated
           state.isAuthenticated = false;
           state.user = null;
@@ -213,19 +249,10 @@ export const authSlice = createAppSlice({
     forgotPassword: create.asyncThunk(
       async (payload: ForgotPasswordPayload, { rejectWithValue }) => {
         try {
-          // 🔧 MOCK MODE - Comment this out when backend is ready
-          const { mockAuthUtils } = await import('@/utils/mock-auth.utils');
-          const mockResponse = await mockAuthUtils.forgotPassword(payload.email);
-          return mockResponse;
-          
-          // 🔧 REAL API - Uncomment when backend is ready
-          // const response = await apiClient.post(
-          //   API_ENDPOINTS.FORGOT_PASSWORD,
-          //   payload
-          // );
-          // return response.data;
+          const response = await apiClient.post(API_ENDPOINTS.FORGOT_PASSWORD, payload);
+          return response.data;
         } catch (error: any) {
-          return rejectWithValue(error.message);
+          return rejectWithValue(error.message || 'Gửi OTP thất bại');
         }
       },
       {
@@ -245,60 +272,14 @@ export const authSlice = createAppSlice({
       }
     ),
 
-    // ==================== VERIFY OTP ====================
-    verifyOtp: create.asyncThunk(
-      async (payload: VerifyOtpPayload, { rejectWithValue }) => {
-        try {
-          // 🔧 MOCK MODE - Comment this out when backend is ready
-          const { mockAuthUtils } = await import('@/utils/mock-auth.utils');
-          const mockResponse = await mockAuthUtils.verifyOtp(payload.email, payload.otp);
-          return mockResponse;
-          
-          // 🔧 REAL API - Uncomment when backend is ready
-          // const response = await apiClient.post(API_ENDPOINTS.VERIFY_OTP, payload);
-          // return response.data;
-        } catch (error: any) {
-          return rejectWithValue(error.message || MESSAGES.OTP_INVALID);
-        }
-      },
-      {
-        pending: (state) => {
-          state.loading = true;
-          state.otpError = null;
-        },
-        fulfilled: (state) => {
-          state.loading = false;
-          state.otpVerified = true;
-        },
-        rejected: (state, action) => {
-          state.loading = false;
-          state.otpVerified = false;
-          state.otpError = action.payload as string;
-        },
-      }
-    ),
-
     // ==================== RESET PASSWORD ====================
     resetPassword: create.asyncThunk(
       async (payload: ResetPasswordPayload, { rejectWithValue }) => {
         try {
-          // 🔧 MOCK MODE - Comment this out when backend is ready
-          const { mockAuthUtils } = await import('@/utils/mock-auth.utils');
-          const mockResponse = await mockAuthUtils.resetPassword(
-            payload.email,
-            payload.otp,
-            payload.newPassword
-          );
-          return mockResponse;
-          
-          // 🔧 REAL API - Uncomment when backend is ready
-          // const response = await apiClient.post(
-          //   API_ENDPOINTS.RESET_PASSWORD,
-          //   payload
-          // );
-          // return response.data;
+          const response = await apiClient.post(API_ENDPOINTS.RESET_PASSWORD, payload);
+          return response.data;
         } catch (error: any) {
-          return rejectWithValue(error.message);
+          return rejectWithValue(error.message || 'Đặt lại mật khẩu thất bại');
         }
       },
       {
@@ -314,6 +295,7 @@ export const authSlice = createAppSlice({
           state.loading = false;
           state.resetPasswordSuccess = false;
           state.error = action.payload as string;
+          state.otpError = action.payload as string;
         },
       }
     ),
@@ -326,16 +308,54 @@ export const authSlice = createAppSlice({
 
     resetForgotPassword: create.reducer((state) => {
       state.forgotPasswordSent = false;
-      state.otpVerified = false;
       state.resetPasswordSuccess = false;
       state.otpError = null;
       state.error = null;
     }),
 
     resetRegisterState: create.reducer((state) => {
-      state.registerSuccess = false;
+      state.needsVerification = false;
+      state.registerEmail = null;
+      state.registerPassword = null;
+      state.registerName = null;
       state.error = null;
+      state.otpError = null;
     }),
+
+    // ==================== GOOGLE LOGIN ====================
+    loginWithGoogle: create.reducer(() => {
+      // Redirect to Google OAuth
+      window.location.href = `${import.meta.env.VITE_API_BASE_URL}${API_ENDPOINTS.GOOGLE_AUTH}`;
+    }),
+
+    handleGoogleCallback: create.asyncThunk(
+      async (token: string, { rejectWithValue }) => {
+        try {
+          // Store token and get user profile
+          storageUtils.setAccessToken(token);
+          const response = await apiClient.get<User>(API_ENDPOINTS.GET_PROFILE);
+          return { user: response.data.data, accessToken: token };
+        } catch (error: any) {
+          return rejectWithValue(error.message);
+        }
+      },
+      {
+        pending: (state) => {
+          state.loading = true;
+        },
+        fulfilled: (state, action) => {
+          state.loading = false;
+          state.isAuthenticated = true;
+          state.user = action.payload.user;
+          state.accessToken = action.payload.accessToken;
+          storageUtils.setUserData(action.payload.user);
+        },
+        rejected: (state, action) => {
+          state.loading = false;
+          state.error = action.payload as string;
+        },
+      }
+    ),
   }),
 
   // Selectors - để dễ dàng truy xuất state
@@ -345,11 +365,13 @@ export const authSlice = createAppSlice({
     selectUser: (state) => state.user,
     selectAuthError: (state) => state.error,
     selectAccessToken: (state) => state.accessToken,
-    
-    selectRegisterSuccess: (state) => state.registerSuccess,
-    
+
+    selectNeedsVerification: (state) => state.needsVerification,
+    selectRegisterEmail: (state) => state.registerEmail,
+    selectRegisterPassword: (state) => state.registerPassword,
+    selectRegisterName: (state) => state.registerName,
+
     selectForgotPasswordSent: (state) => state.forgotPasswordSent,
-    selectOtpVerified: (state) => state.otpVerified,
     selectResetPasswordSuccess: (state) => state.resetPasswordSuccess,
     selectOtpError: (state) => state.otpError,
   },
@@ -359,11 +381,13 @@ export const authSlice = createAppSlice({
 export const {
   loginUser,
   registerUser,
+  verifyAccount,
   logoutUser,
   getUserProfile,
   forgotPassword,
-  verifyOtp,
   resetPassword,
+  loginWithGoogle,
+  handleGoogleCallback,
   resetError,
   resetForgotPassword,
   resetRegisterState,
@@ -376,13 +400,14 @@ export const {
   selectUser,
   selectAuthError,
   selectAccessToken,
-  selectRegisterSuccess,
+  selectNeedsVerification,
+  selectRegisterEmail,
+  selectRegisterPassword,
+  selectRegisterName,
   selectForgotPasswordSent,
-  selectOtpVerified,
   selectResetPasswordSuccess,
   selectOtpError,
 } = authSlice.selectors;
 
 // Export reducer
 export default authSlice.reducer;
-

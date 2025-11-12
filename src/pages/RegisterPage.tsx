@@ -1,60 +1,107 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { registerUser, resetError } from '@/redux/slices/auth.slice';
+import { registerUser, verifyAccount, resetError, resetRegisterState } from '@/redux/slices/auth.slice';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Label } from '@/components/Label';
+import { OtpInput, OtpInputRef } from '@/components/OtpInput';
 import { useToast } from '@/hooks/useToast';
 
 const RegisterPage = () => {
-  const [name, setName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<{
-    name?: string;
+    fullName?: string;
     email?: string;
     password?: string;
     confirmPassword?: string;
   }>({});
+  const [countdown, setCountdown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
 
+  const otpRef = useRef<OtpInputRef>(null);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+
+  const {
+    loading,
+    error,
+    isAuthenticated,
+    needsVerification,
+    registerEmail,
+    registerPassword,
+    otpError
+  } = useAppSelector((state) => state.auth);
+
+  // Countdown timer for resend OTP
+  useEffect(() => {
+    if (needsVerification && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (countdown === 0) {
+      setCanResend(true);
+    }
+  }, [countdown, needsVerification]);
 
   useEffect(() => {
     if (isAuthenticated) {
+      toast({
+        variant: 'success',
+        title: 'Đăng ký thành công',
+        description: 'Chào mừng bạn đến UTE Shop!',
+      });
       navigate('/');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, toast]);
 
   useEffect(() => {
     if (error) {
       toast({
         variant: 'destructive',
-        title: 'Registration Failed',
+        title: 'Đăng ký thất bại',
         description: error,
       });
       dispatch(resetError());
     }
   }, [error, dispatch, toast]);
 
+  useEffect(() => {
+    if (otpError) {
+      toast({
+        variant: 'destructive',
+        title: 'Xác thực thất bại',
+        description: otpError,
+      });
+      otpRef.current?.reset();
+      dispatch(resetError());
+    }
+  }, [otpError, dispatch, toast]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      dispatch(resetRegisterState());
+    };
+  }, [dispatch]);
+
   const validateForm = () => {
     const newErrors: {
-      name?: string;
+      fullName?: string;
       email?: string;
       password?: string;
       confirmPassword?: string;
     } = {};
 
-    if (!name) {
-      newErrors.name = 'Name is required';
-    } else if (name.length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+    if (!fullName) {
+      newErrors.fullName = 'Full name is required';
+    } else if (fullName.length < 2) {
+      newErrors.fullName = 'Full name must be at least 2 characters';
     }
 
     if (!email) {
@@ -86,8 +133,100 @@ const RegisterPage = () => {
       return;
     }
 
-    dispatch(registerUser({ name, email, password, confirmPassword }));
+    // Only send fullName, email, password to API (confirmPassword is FE validation only)
+    dispatch(registerUser({ fullName, email, password, confirmPassword }));
   };
+
+  const handleVerifyOtp = (otp: string) => {
+    if (registerEmail && registerPassword && fullName) {
+      dispatch(verifyAccount({ email: registerEmail, password: registerPassword, fullName, otp }));
+    }
+  };
+
+  const handleResendOtp = () => {
+    if (registerEmail && fullName) {
+      dispatch(registerUser({ fullName, email: registerEmail, password: registerPassword!, confirmPassword: registerPassword! }));
+      setCountdown(60);
+      setCanResend(false);
+      toast({
+        variant: 'success',
+        title: 'Gửi lại OTP',
+        description: 'Mã xác thực mới đã được gửi đến email của bạn',
+      });
+    }
+  };
+
+  if (needsVerification) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8 bg-gradient-to-br from-[#bfb5ab] via-[#c9bfb5] to-[#d4cac0]">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl space-y-6"
+        >
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl font-bold">Verify Your Email</h2>
+            <p className="text-gray-600">
+              We've sent a verification code to
+            </p>
+            <p className="font-medium text-gray-900">{registerEmail}</p>
+          </div>
+
+          <div className="space-y-4">
+            <OtpInput
+              ref={otpRef}
+              length={6}
+              onComplete={handleVerifyOtp}
+              error={!!otpError}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="text-center space-y-2">
+            {canResend ? (
+              <button
+                onClick={handleResendOtp}
+                disabled={loading}
+                className="text-sm text-primary hover:underline disabled:opacity-50"
+              >
+                Resend OTP
+              </button>
+            ) : (
+              <p className="text-sm text-gray-500">
+                Resend OTP in {countdown}s
+              </p>
+            )}
+          </div>
+
+          <Button
+            onClick={() => {
+              const otp = otpRef.current?.getOtp();
+              if (otp && otp.length === 6) {
+                handleVerifyOtp(otp);
+              } else {
+                toast({
+                  variant: 'destructive',
+                  title: 'Invalid OTP',
+                  description: 'Please enter all 6 digits',
+                });
+              }
+            }}
+            disabled={loading}
+            className="w-full"
+          >
+            {loading ? 'Verifying...' : 'Verify OTP'}
+          </Button>
+
+          <button
+            onClick={() => dispatch(resetRegisterState())}
+            className="w-full text-sm text-gray-500 hover:text-gray-900"
+          >
+            Back to registration
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -101,9 +240,9 @@ const RegisterPage = () => {
         {/* Decorative circles */}
         <div className="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-black/5 rounded-full blur-3xl"></div>
-        
+
         <div className="text-center space-y-6 text-white relative z-10">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
@@ -111,7 +250,7 @@ const RegisterPage = () => {
           >
             ATELIER
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
@@ -145,21 +284,21 @@ const RegisterPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="fullName">Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
                 <Input
-                  id="name"
+                  id="fullName"
                   type="text"
                   placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   className="pl-10"
-                  error={errors.name}
+                  error={errors.fullName}
                   autoComplete="name"
                 />
               </div>
-              {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
+              {errors.fullName && <p className="text-sm text-red-600">{errors.fullName}</p>}
             </div>
 
             <div className="space-y-2">

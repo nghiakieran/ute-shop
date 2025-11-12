@@ -2,7 +2,8 @@
  * API Constants
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.uteshop.com/v1';
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3009/ute-shop/api/client';
 
 export const API_ENDPOINTS = {
   // Auth
@@ -10,14 +11,15 @@ export const API_ENDPOINTS = {
   REGISTER: '/auth/register',
   LOGOUT: '/auth/logout',
   REFRESH_TOKEN: '/auth/refresh',
+  VERIFY_ACCOUNT: '/auth/verify-account',
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',
-  VERIFY_OTP: '/auth/verify-otp',
-  RESEND_OTP: '/auth/resend-otp',
+  GOOGLE_AUTH: '/auth/google',
+  GOOGLE_CALLBACK: '/auth/google/callback',
 
   // User
-  GET_PROFILE: '/user/profile',
-  UPDATE_PROFILE: '/user/profile',
+  GET_PROFILE: '/auth/profile',
+  UPDATE_PROFILE: '/auth/profile',
   CHANGE_PASSWORD: '/user/change-password',
   UPLOAD_AVATAR: '/user/avatar',
 
@@ -32,4 +34,3 @@ export const API_ENDPOINTS = {
   UPDATE_CART: '/cart/update',
   REMOVE_FROM_CART: '/cart/remove',
 } as const;
-

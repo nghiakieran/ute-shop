@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { loginUser, resetError } from '@/redux/slices/auth.slice';
+import { loginUser, loginWithGoogle, handleGoogleCallback, resetError } from '@/redux/slices/auth.slice';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Label } from '@/components/Label';
@@ -13,23 +13,37 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [searchParams] = useSearchParams();
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
+  // Handle Google OAuth callback
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      dispatch(handleGoogleCallback(token));
+    }
+  }, [searchParams, dispatch]);
+
   useEffect(() => {
     if (isAuthenticated) {
+      toast({
+        variant: 'success',
+        title: 'Chào mừng bạn đã trở lại',
+        description: 'Đăng nhập thành công!',
+      });
       navigate('/');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, toast]);
 
   useEffect(() => {
     if (error) {
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
+        title: 'Đăng nhập thất bại',
         description: error,
       });
       dispatch(resetError());
@@ -155,12 +169,7 @@ const LoginPage = () => {
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() => {
-                toast({
-                  title: 'Google Login',
-                  description: 'Google authentication will be available soon!',
-                });
-              }}
+              onClick={() => dispatch(loginWithGoogle())}
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
@@ -203,9 +212,9 @@ const LoginPage = () => {
         {/* Decorative circles */}
         <div className="absolute top-20 right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-black/5 rounded-full blur-3xl"></div>
-        
+
         <div className="text-center space-y-6 text-white relative z-10">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
@@ -213,7 +222,7 @@ const LoginPage = () => {
           >
             ATELIER
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}

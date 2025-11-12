@@ -17,6 +17,7 @@ import {
   CheckoutPage,
   WishlistPage,
 } from '@/pages';
+import LoginSuccessPage from '@/pages/LoginSuccessPage';
 import { AuthGuard, GuestGuard } from '@/guards';
 
 export const AppRoutes = () => {
@@ -61,6 +62,7 @@ export const AppRoutes = () => {
           </GuestGuard>
         }
       />
+      <Route path="/login-success" element={<LoginSuccessPage />} />
 
       {/* Protected Routes (Require authentication) */}
       <Route

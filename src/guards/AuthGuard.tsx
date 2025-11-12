@@ -13,6 +13,9 @@ interface AuthGuardProps {
   children: ReactNode;
 }
 
+// Global flag to prevent multiple profile fetches
+let hasCalledGetProfile = false;
+
 export const AuthGuard = ({ children }: AuthGuardProps) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
@@ -20,8 +23,9 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
   const loading = useAppSelector(selectAuthLoading);
 
   useEffect(() => {
-    // Try to fetch user profile if we have a token
-    if (isAuthenticated) {
+    // Try to fetch user profile if we have a token and haven't already
+    if (isAuthenticated && !hasCalledGetProfile) {
+      hasCalledGetProfile = true;
       dispatch(getUserProfile());
     }
   }, [dispatch, isAuthenticated]);
