@@ -1,6 +1,6 @@
 /**
  * Product Card Component
- * Display product in grid/list view
+ * ĐÃ SỬA: Để phù hợp với cấu trúc API 'ute_shop'
  */
 
 import { Link } from 'react-router-dom';
@@ -8,15 +8,47 @@ import { motion } from 'framer-motion';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { Button } from './Button';
 
-interface ProductCardProps {
-  product: Product;
-  onAddToCart?: (product: Product) => void;
-  onAddToWishlist?: (product: Product) => void;
+// Giả sử kiểu 'Product' của bạn trông giống như JSON bạn đã gửi
+// (Bạn nên định nghĩa kiểu này ở một file .types.ts riêng)
+interface ProductApi {
+  id: number;
+  productName: string;
+  displayStatus: boolean;
+  ratingAvg: number;
+  originalPrice: number;
+  unitPrice: number;
+  productStatus: 'ACTIVE' | 'OUT_OF_STOCK';
+  brand: { brandName: string };
+  discountDetail: { percentage: number };
+  category: { categoryName: string };
+  images: { url: string }[];
+  newArrival?: boolean;
 }
 
-export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCardProps) => {
-  const discountPercentage = product.discount || 0;
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+interface ProductCardProps {
+  product: ProductApi; 
+  onAddToCart?: (product: ProductApi) => void;
+  onAddToWishlist?: (product: ProductApi) => void;
+}
+
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(price);
+};
+
+export const ProductCard = ({
+  product,
+  onAddToCart,
+  onAddToWishlist,
+}: ProductCardProps) => {
+  const discountPercentage = product.discountDetail.percentage || 0;
+  const hasDiscount = product.originalPrice > product.unitPrice;
+  const imageUrl =
+    product.images && product.images.length > 0
+      ? product.images[0].url
+      : 'https://placehold.co/600x800/eeeeee/333333?text=No+Image'; 
 
   return (
     <motion.div
@@ -25,17 +57,20 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
       transition={{ duration: 0.3 }}
       className="group relative bg-card rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
     >
-      {/* Image Container */}
-      <Link to={`/products/${product.slug}`} className="block relative aspect-[3/4] overflow-hidden bg-muted">
+
+      <Link
+        to={`/products/${product.id}`} 
+        className="block relative aspect-[3/4] overflow-hidden bg-muted"
+      >
         <img
-          src={product.images[0]}
-          alt={product.name}
+          src={imageUrl} 
+          alt={product.productName} 
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => (e.currentTarget.src = 'https://placehold.co/600x800/eeeeee/333333?text=No+Image')}
         />
-        
-        {/* Badges */}
+
         <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {product.newArrival && (
+          {product.newArrival && ( 
             <span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded">
               New
             </span>
@@ -47,7 +82,6 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
           )}
         </div>
 
-        {/* Wishlist Button */}
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -58,7 +92,6 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
           <Heart className="w-4 h-4" />
         </button>
 
-        {/* Quick Add Button */}
         <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             size="sm"
@@ -67,19 +100,23 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
               e.preventDefault();
               onAddToCart?.(product);
             }}
+            disabled={product.productStatus === 'OUT_OF_STOCK'}
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
-            Quick Add
+            {product.productStatus === 'OUT_OF_STOCK'
+              ? 'Out of Stock'
+              : 'Quick Add'}
           </Button>
         </div>
       </Link>
 
-      {/* Product Info */}
       <div className="p-4">
-        <Link to={`/products/${product.slug}`}>
-          <p className="text-sm text-muted-foreground mb-1">{product.category.name}</p>
+        <Link to={`/products/${product.id}`}>
+          <p className="text-sm text-muted-foreground mb-1">
+            {product.category.categoryName}
+          </p>
           <h3 className="font-medium text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-            {product.name}
+            {product.productName}
           </h3>
         </Link>
 
@@ -90,7 +127,7 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
               <svg
                 key={i}
                 className={`w-4 h-4 ${
-                  i < Math.floor(product.rating)
+                  i < Math.floor(product.ratingAvg)
                     ? 'text-yellow-400 fill-current'
                     : 'text-gray-300'
                 }`}
@@ -107,30 +144,25 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
               </svg>
             ))}
           </div>
-          <span className="text-xs text-muted-foreground">({product.reviewCount})</span>
+  
         </div>
 
         {/* Price */}
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-foreground">
-            ${product.price.toFixed(2)}
+            {formatPrice(product.unitPrice)} 
           </span>
           {hasDiscount && (
             <span className="text-sm text-muted-foreground line-through">
-              ${product.originalPrice?.toFixed(2)}
+              {formatPrice(product.originalPrice)}
             </span>
           )}
         </div>
 
-        {/* Stock Status */}
-        {product.stock < 10 && product.stock > 0 && (
-          <p className="text-xs text-destructive mt-2">Only {product.stock} left in stock</p>
-        )}
-        {product.stock === 0 && (
-          <p className="text-xs text-muted-foreground mt-2">Out of stock</p>
+        {product.productStatus === 'OUT_OF_STOCK' && (
+          <p className="text-xs text-destructive mt-2">Out of stock</p>
         )}
       </div>
     </motion.div>
   );
 };
-
