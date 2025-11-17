@@ -1,81 +1,110 @@
-/**
- * Home Page
- * Trang chủ với hero banner và product showcase
- */
-
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ShoppingCart } from 'lucide-react'; // Import ShoppingCart
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import {
-  fetchFeaturedProducts,
-  fetchNewArrivals,
   fetchCategories,
-  selectFeaturedProducts,
-  selectNewArrivals,
   selectCategories,
+  fetchNewestProducts,
+  fetchBestSellingProducts,
+  fetchMostViewedProducts,
+  fetchTopDiscountProducts,
+  selectNewestProducts,
+  selectBestSellingProducts,
+  selectMostViewedProducts,
+  selectTopDiscountProducts,
 } from '@/redux/slices/product.slice';
 import { addToCart } from '@/redux/slices/cart.slice';
 import { Button, ProductCard } from '@/components';
 import { useToast } from '@/hooks';
 import { MainLayout } from '@/layouts';
 
+// ==================================================================
+// 1. ĐỊNH NGHĨA KIỂU TỪ API (Giống như trong ProductCard.tsx)
+// (Lý tưởng nhất, bạn nên chuyển nó vào file types.ts)
+// ==================================================================
+interface ProductApi {
+  id: number;
+  productName: string;
+  displayStatus: boolean;
+  ratingAvg: number;
+  originalPrice: number;
+  unitPrice: number;
+  productStatus: 'ACTIVE' | 'OUT_OF_STOCK';
+  brand: { brandName: string };
+  discountDetail: { percentage: number };
+  category: { categoryName: string };
+  images: { url: string }[];
+  newArrival?: boolean;
+}
+
+type ProductCategory = any;
+
+
 const HomePage = () => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
-  const featured = useAppSelector(selectFeaturedProducts);
-  const newArrivals = useAppSelector(selectNewArrivals);
+
   const categories = useAppSelector(selectCategories);
 
+  const newest = useAppSelector(selectNewestProducts);
+  const bestSelling = useAppSelector(selectBestSellingProducts);
+  const mostViewed = useAppSelector(selectMostViewedProducts);
+  const topDiscount = useAppSelector(selectTopDiscountProducts);
+
   useEffect(() => {
-    dispatch(fetchFeaturedProducts());
-    dispatch(fetchNewArrivals());
+    dispatch(fetchNewestProducts());
+    dispatch(fetchBestSellingProducts());
+    dispatch(fetchMostViewedProducts());
+    dispatch(fetchTopDiscountProducts());
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  const handleAddToCart = (product: Product) => {
-    const defaultSize = product.sizes.find((s: ProductSize) => s.available) || product.sizes[0];
-    const defaultColor = product.colors.find((c: ProductColor) => c.available) || product.colors[0];
 
-    if (!defaultSize || !defaultColor) {
-      toast({
-        variant: 'destructive',
-        title: 'Cannot add to cart',
-        description: 'This product is currently unavailable',
-      });
-      return;
-    }
+  const handleAddToCart = (product: ProductApi) => {
+    // 🚨 QUAN TRỌNG: API danh sách sản phẩm không trả về `sizes` và `colors`.
+    // Logic "Quick Add" (thêm nhanh) không thể thực hiện được.
+    // Chúng ta phải yêu cầu người dùng xem chi tiết.
 
-    dispatch(
-      addToCart({
-        product,
-        quantity: 1,
-        size: defaultSize,
-        color: defaultColor,
-      })
-    );
+    // const defaultSize =
+    //   product.sizes.find((s: ProductSize) => s.available) || product.sizes[0];
+    // const defaultColor =
+    //   product.colors.find((c: ProductColor) => c.available) ||
+    //   product.colors[0];
+    
+    // if (!defaultSize || !defaultColor) { ... }
 
+    // Logic cũ đã bị xóa vì `product.sizes` không tồn tại.
+    // Thay vào đó, chúng ta hiển thị một thông báo:
     toast({
-      title: 'Added to cart',
-      description: `${product.name} has been added to your cart`,
+      variant: 'default',
+      title: 'Vui lòng chọn Size & Màu sắc',
+      description: `Nhấn vào sản phẩm "${product.productName}" để xem chi tiết.`,
+      // Bạn có thể thêm một nút action để điều hướng
+      // action: <ToastAction altText="View" onClick={() => navigate(...)}>View</ToastAction>,
     });
+
+    // Code dispatch (thêm vào giỏ hàng) cũ đã bị xóa.
+    // dispatch(
+    //   addToCart({ ... })
+    // );
   };
 
-  const handleAddToWishlist = (product: Product) => {
+  const handleAddToWishlist = (product: ProductApi) => { // Sửa kiểu: Product -> ProductApi
     toast({
       title: 'Added to wishlist',
-      description: `${product.name} has been added to your wishlist`,
+      description: `${product.productName} has been added to your wishlist`, // Sửa: name -> productName
     });
   };
 
   return (
     <MainLayout>
-      {/* Hero Section */}
+      {/* Hero Section (Giữ nguyên) */}
       <section className="relative h-[90vh] min-h-[700px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1920&q=80')] bg-cover bg-center" />
         <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/60" />
-        
+
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -90,7 +119,7 @@ const HomePage = () => {
           >
             Timeless European Fashion
           </motion.h1>
-          
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -99,7 +128,7 @@ const HomePage = () => {
           >
             Discover minimalist elegance with our curated collection
           </motion.p>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -115,7 +144,7 @@ const HomePage = () => {
         </motion.div>
       </section>
 
-      {/* Categories Section */}
+      {/* Categories Section (Giữ nguyên - giả sử category có 'id', 'slug', 'image', 'name') */}
       <section className="section-padding bg-background">
         <div className="container-custom">
           <motion.div
@@ -124,12 +153,16 @@ const HomePage = () => {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Shop by Category</h2>
-            <p className="text-muted-foreground text-lg">Explore our curated collections</p>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+              Shop by Category
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              Explore our curated collections
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {categories.map((category, index) => (
+            {categories.map((category: any, index: number) => ( // Dùng 'any' nếu chưa có kiểu
               <motion.div
                 key={category.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -138,12 +171,12 @@ const HomePage = () => {
                 transition={{ delay: index * 0.1 }}
               >
                 <Link
-                  to={`/products?category=${category.slug}`}
+                  to={`/products?category=${category.slug}`} // Mock data có 'slug', API thật có thể không
                   className="group block relative aspect-[3/4] rounded-lg overflow-hidden"
                 >
                   <img
-                    src={category.image}
-                    alt={category.name}
+                    src={category.image} // Mock data có 'image'
+                    alt={category.name} // Mock data có 'name'
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -163,7 +196,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Featured Products */}
+      {/* Best Selling Products (Hiển thị 4) */}
       <section className="section-padding bg-secondary">
         <div className="container-custom">
           <motion.div
@@ -172,12 +205,16 @@ const HomePage = () => {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Featured Products</h2>
-            <p className="text-muted-foreground text-lg">Handpicked favorites for you</p>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+              Best Selling Products
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              Our top-selling, customer favorites
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featured.slice(0, 4).map((product) => (
+            {bestSelling.slice(0, 4).map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -187,7 +224,7 @@ const HomePage = () => {
             ))}
           </div>
 
-          {featured.length > 4 && (
+          {bestSelling.length > 4 && (
             <div className="text-center mt-12">
               <Link to="/products">
                 <Button variant="outline" size="lg">
@@ -200,8 +237,10 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* New Arrivals */}
-      {newArrivals.length > 0 && (
+      {/* ================================================================== */}
+      {/* 4. SỬA HIỂN THỊ (slice 8 SẢN PHẨM) */}
+      {/* ================================================================== */}
+      {newest.length > 0 && (
         <section className="section-padding bg-background">
           <div className="container-custom">
             <motion.div
@@ -210,12 +249,17 @@ const HomePage = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">New Arrivals</h2>
-              <p className="text-muted-foreground text-lg">Latest additions to our collection</p>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+                Newest Products
+              </h2>
+              <p className="text-muted-foreground text-lg">
+                Fresh picks, just for you
+              </p>
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {newArrivals.slice(0, 4).map((product) => (
+              {/* SỬA TẠI ĐÂY: slice(0, 8) để hiển thị 8 sản phẩm */}
+              {newest.slice(0, 8).map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -228,7 +272,71 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* CTA Section */}
+      {/* 3. Most Viewed Products (Hiển thị 4) */}
+      {mostViewed.length > 0 && (
+        <section className="section-padding bg-secondary">
+          <div className="container-custom">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+                Most Viewed Products
+              </h2>
+              <p className="text-muted-foreground text-lg">
+                What everyone is looking at right now
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {mostViewed.slice(0, 4).map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={handleAddToCart}
+                  onAddToWishlist={handleAddToWishlist}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 4. Top Discount Products (Hiển thị 4) */}
+      {topDiscount.length > 0 && (
+        <section className="section-padding bg-background">
+          <div className="container-custom">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+                Top Discount Products
+              </h2>
+              <p className="text-muted-foreground text-lg">
+                Hurry up! Best deals for you
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {topDiscount.slice(0, 4).map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={handleAddToCart}
+                  onAddToWishlist={handleAddToWishlist}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* CTA Section (Giữ nguyên) */}
       <section className="section-padding bg-primary text-primary-foreground">
         <div className="container-custom">
           <motion.div
@@ -241,7 +349,8 @@ const HomePage = () => {
               Join Our Fashion Community
             </h2>
             <p className="text-xl text-primary-foreground/80 mb-8">
-              Get exclusive access to new arrivals, special offers, and fashion inspiration
+              Get exclusive access to new arrivals, special offers, and fashion
+              inspiration
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <input
@@ -249,7 +358,10 @@ const HomePage = () => {
                 placeholder="Enter your email"
                 className="px-6 py-3 rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[300px]"
               />
-              <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+              <Button
+                size="lg"
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
+              >
                 Subscribe
               </Button>
             </div>

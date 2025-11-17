@@ -5,7 +5,12 @@
 
 import { createAppSlice } from '../createAppSlice';
 import { mockProductsUtils } from '@/utils/mock-products.utils';
-
+import {
+  getNewestProducts,
+  getBestSellingProducts,
+  getMostViewedProducts,
+  getTopDiscountProducts,
+} from '@/utils/product.api';
 interface ProductSliceState {
   products: Product[];
   featured: Product[];
@@ -15,6 +20,10 @@ interface ProductSliceState {
   filter: ProductFilter;
   loading: boolean;
   error: string | null;
+  newest: any[];
+  bestSelling: any[];
+  mostViewed: any[];
+  topDiscount: any[];
 }
 
 const initialState: ProductSliceState = {
@@ -26,6 +35,10 @@ const initialState: ProductSliceState = {
   filter: {},
   loading: false,
   error: null,
+  newest: [],
+  bestSelling: [],
+  mostViewed: [],
+  topDiscount: [],
 };
 
 export const productSlice = createAppSlice({
@@ -34,7 +47,7 @@ export const productSlice = createAppSlice({
   reducers: (create) => ({
     // ==================== FETCH PRODUCTS ====================
     fetchProducts: create.asyncThunk(
-      async (filter?: ProductFilter, { rejectWithValue }) => {
+      async (filter: ProductFilter | undefined, { rejectWithValue }) => {
         try {
           const products = await mockProductsUtils.getProducts(filter);
           return products;
@@ -180,30 +193,146 @@ export const productSlice = createAppSlice({
     clearCurrentProduct: create.reducer((state) => {
       state.currentProduct = null;
     }),
+
+    fetchNewestProducts: create.asyncThunk(
+      async (_, { rejectWithValue }) => {
+        try {
+          const data = await getNewestProducts(); // <-- Dùng API thật
+          return data;
+        } catch (error: any) {
+          return rejectWithValue(error.message || 'Failed to fetch newest products');
+        }
+      },
+      {
+        pending: (state) => {
+          state.loading = true;
+          state.error = null;
+        },
+        fulfilled: (state, action) => {
+          state.loading = false;
+          state.newest = action.payload; // <-- Cập nhật state 'newest'
+        },
+        rejected: (state, action) => {
+          state.loading = false;
+          state.error = action.payload as string;
+        },
+      }
+    ),
+
+    // ==================== FETCH BEST SELLING (API) ====================
+    fetchBestSellingProducts: create.asyncThunk(
+      async (_, { rejectWithValue }) => {
+        try {
+          const data = await getBestSellingProducts(); // <-- Dùng API thật
+          return data;
+        } catch (error: any) {
+          return rejectWithValue(error.message || 'Failed to fetch best-selling');
+        }
+      },
+      {
+        pending: (state) => {
+          state.loading = true;
+          state.error = null;
+        },
+        fulfilled: (state, action) => {
+          state.loading = false;
+          state.bestSelling = action.payload; // <-- Cập nhật state 'bestSelling'
+        },
+        rejected: (state, action) => {
+          state.loading = false;
+          state.error = action.payload as string;
+        },
+      }
+    ),
+
+    // ==================== FETCH MOST VIEWED (API) ====================
+    fetchMostViewedProducts: create.asyncThunk(
+      async (_, { rejectWithValue }) => {
+        try {
+          const data = await getMostViewedProducts(); // <-- Dùng API thật
+          return data;
+        } catch (error: any) {
+          return rejectWithValue(error.message || 'Failed to fetch most-viewed');
+        }
+      },
+      {
+        pending: (state) => {
+          state.loading = true;
+          state.error = null;
+        },
+        fulfilled: (state, action) => {
+          state.loading = false;
+          state.mostViewed = action.payload; // <-- Cập nhật state 'mostViewed'
+        },
+        rejected: (state, action) => {
+          state.loading = false;
+          state.error = action.payload as string;
+        },
+      }
+    ),
+
+    // ==================== FETCH TOP DISCOUNT (API) ====================
+    fetchTopDiscountProducts: create.asyncThunk(
+      async (_, { rejectWithValue }) => {
+        try {
+          const data = await getTopDiscountProducts(); // <-- Dùng API thật
+          return data;
+        } catch (error: any) {
+          return rejectWithValue(error.message || 'Failed to fetch top-discount');
+        }
+      },
+      {
+        pending: (state) => {
+          state.loading = true;
+          state.error = null;
+        },
+        fulfilled: (state, action) => {
+          state.loading = false;
+          state.topDiscount = action.payload; // <-- Cập nhật state 'topDiscount'
+        },
+        rejected: (state, action) => {
+          state.loading = false;
+          state.error = action.payload as string;
+        },
+      }
+    ),
   }),
 });
 
-// Export actions
 export const {
   fetchProducts,
   fetchProductById,
   fetchCategories,
   fetchFeaturedProducts,
   fetchNewArrivals,
+  fetchNewestProducts,
+  fetchBestSellingProducts,
+  fetchMostViewedProducts,
+  fetchTopDiscountProducts,
+  clearCurrentProduct,
   setFilter,
   clearFilter,
-  clearCurrentProduct,
 } = productSlice.actions;
 
 // Export selectors
 export const selectProducts = (state: { product: ProductSliceState }) => state.product.products;
-export const selectFeaturedProducts = (state: { product: ProductSliceState }) => state.product.featured;
-export const selectNewArrivals = (state: { product: ProductSliceState }) => state.product.newArrivals;
+export const selectFeaturedProducts = (state: { product: ProductSliceState }) =>
+  state.product.featured;
+export const selectNewArrivals = (state: { product: ProductSliceState }) =>
+  state.product.newArrivals;
 export const selectCategories = (state: { product: ProductSliceState }) => state.product.categories;
-export const selectCurrentProduct = (state: { product: ProductSliceState }) => state.product.currentProduct;
+export const selectCurrentProduct = (state: { product: ProductSliceState }) =>
+  state.product.currentProduct;
 export const selectProductFilter = (state: { product: ProductSliceState }) => state.product.filter;
-export const selectProductLoading = (state: { product: ProductSliceState }) => state.product.loading;
+export const selectProductLoading = (state: { product: ProductSliceState }) =>
+  state.product.loading;
 export const selectProductError = (state: { product: ProductSliceState }) => state.product.error;
 
+export const selectNewestProducts = (state: { product: ProductSliceState }) => state.product.newest;
+export const selectBestSellingProducts = (state: { product: ProductSliceState }) =>
+  state.product.bestSelling;
+export const selectMostViewedProducts = (state: { product: ProductSliceState }) =>
+  state.product.mostViewed;
+export const selectTopDiscountProducts = (state: { product: ProductSliceState }) =>
+  state.product.topDiscount;
 export default productSlice.reducer;
-
