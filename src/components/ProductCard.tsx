@@ -1,8 +1,3 @@
-/**
- * Product Card Component
- * ĐÃ SỬA: Để phù hợp với cấu trúc API 'ute_shop'
- */
-
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, ShoppingCart } from 'lucide-react';
@@ -18,15 +13,15 @@ interface ProductApi {
   originalPrice: number;
   unitPrice: number;
   productStatus: 'ACTIVE' | 'OUT_OF_STOCK';
-  brand: { brandName: string };
-  discountDetail: { percentage: number };
-  category: { categoryName: string };
+  brand?: { brandName: string };
+  discountDetail?: { percentage: number };
+  category?: { categoryName: string };
   images: { url: string }[];
   newArrival?: boolean;
 }
 
 interface ProductCardProps {
-  product: ProductApi; 
+  product: ProductApi;
   onAddToCart?: (product: ProductApi) => void;
   onAddToWishlist?: (product: ProductApi) => void;
 }
@@ -38,17 +33,13 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
-export const ProductCard = ({
-  product,
-  onAddToCart,
-  onAddToWishlist,
-}: ProductCardProps) => {
-  const discountPercentage = product.discountDetail.percentage || 0;
+export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCardProps) => {
+  const discountPercentage = product.discountDetail?.percentage || 0;
   const hasDiscount = product.originalPrice > product.unitPrice;
   const imageUrl =
     product.images && product.images.length > 0
       ? product.images[0].url
-      : 'https://placehold.co/600x800/eeeeee/333333?text=No+Image'; 
+      : 'https://placehold.co/600x800/eeeeee/333333?text=No+Image';
 
   return (
     <motion.div
@@ -57,20 +48,21 @@ export const ProductCard = ({
       transition={{ duration: 0.3 }}
       className="group relative bg-card rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
     >
-
       <Link
-        to={`/products/${product.id}`} 
+        to={`/products/${product.id}`}
         className="block relative aspect-[3/4] overflow-hidden bg-muted"
       >
         <img
-          src={imageUrl} 
-          alt={product.productName} 
+          src={imageUrl}
+          alt={product.productName}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          onError={(e) => (e.currentTarget.src = 'https://placehold.co/600x800/eeeeee/333333?text=No+Image')}
+          onError={(e) =>
+            (e.currentTarget.src = 'https://placehold.co/600x800/eeeeee/333333?text=No+Image')
+          }
         />
 
         <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {product.newArrival && ( 
+          {product.newArrival && (
             <span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded">
               New
             </span>
@@ -103,9 +95,7 @@ export const ProductCard = ({
             disabled={product.productStatus === 'OUT_OF_STOCK'}
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
-            {product.productStatus === 'OUT_OF_STOCK'
-              ? 'Out of Stock'
-              : 'Quick Add'}
+            {product.productStatus === 'OUT_OF_STOCK' ? 'Out of Stock' : 'Quick Add'}
           </Button>
         </div>
       </Link>
@@ -113,7 +103,7 @@ export const ProductCard = ({
       <div className="p-4">
         <Link to={`/products/${product.id}`}>
           <p className="text-sm text-muted-foreground mb-1">
-            {product.category.categoryName}
+            {product.category?.categoryName || 'Unknown Category'}
           </p>
           <h3 className="font-medium text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
             {product.productName}
@@ -144,13 +134,12 @@ export const ProductCard = ({
               </svg>
             ))}
           </div>
-  
         </div>
 
         {/* Price */}
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-foreground">
-            {formatPrice(product.unitPrice)} 
+            {formatPrice(product.unitPrice)}
           </span>
           {hasDiscount && (
             <span className="text-sm text-muted-foreground line-through">

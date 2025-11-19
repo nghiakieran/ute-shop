@@ -101,7 +101,15 @@ export const userSlice = createAppSlice({
             avatar: base64,
           });
 
-          await dispatch(getUserProfile());
+          // Get the avatar URL from the response
+          const avatarUrl = response.data.data.avatar;
+
+          // Update profile with the new avatar URL using the same API as phone
+          if (avatarUrl) {
+            await dispatch(updateProfile({ avatar: avatarUrl }));
+          } else {
+            await dispatch(getUserProfile());
+          }
 
           return response.data.data;
         } catch (error: any) {
