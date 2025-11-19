@@ -11,6 +11,8 @@ type User = {
 
 type UpdateProfilePayload = {
   fullName?: string;
+  phone?: string;
+  avatar?: string;
 };
 
 type ChangePasswordPayload = {

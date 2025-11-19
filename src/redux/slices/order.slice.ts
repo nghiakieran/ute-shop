@@ -4,11 +4,12 @@
  */
 
 import { createAppSlice } from '../createAppSlice';
-import { mockOrdersUtils } from '@/utils/mock-orders.utils';
+import { getOrders } from '@/utils/order.api';
+import type { Bill } from '@/types/order';
 
 interface OrderSliceState {
-  orders: Order[];
-  currentOrder: Order | null;
+  orders: Bill[];
+  currentOrder: Bill | null;
   loading: boolean;
   error: string | null;
 }
@@ -28,7 +29,7 @@ export const orderSlice = createAppSlice({
     fetchOrders: create.asyncThunk(
       async (_, { rejectWithValue }) => {
         try {
-          const orders = await mockOrdersUtils.getOrders();
+          const orders = await getOrders();
           return orders;
         } catch (error: any) {
           return rejectWithValue(error.message || 'Failed to fetch orders');
@@ -54,11 +55,8 @@ export const orderSlice = createAppSlice({
     fetchOrderById: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          const order = await mockOrdersUtils.getOrderById(id);
-          if (!order) {
-            throw new Error('Order not found');
-          }
-          return order;
+          // TODO: Implement API call
+          throw new Error('Not implemented');
         } catch (error: any) {
           return rejectWithValue(error.message || 'Failed to fetch order');
         }
@@ -84,8 +82,8 @@ export const orderSlice = createAppSlice({
     cancelOrder: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          const order = await mockOrdersUtils.cancelOrder(id);
-          return order;
+          // TODO: Implement API call
+          throw new Error('Not implemented');
         } catch (error: any) {
           return rejectWithValue(error.message || 'Failed to cancel order');
         }
@@ -97,7 +95,7 @@ export const orderSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.loading = false;
-          const index = state.orders.findIndex(o => o.id === action.payload.id);
+          const index = state.orders.findIndex((o) => o.id === action.payload.id);
           if (index !== -1) {
             state.orders[index] = action.payload;
           }
@@ -120,12 +118,7 @@ export const orderSlice = createAppSlice({
 });
 
 // Export actions
-export const {
-  fetchOrders,
-  fetchOrderById,
-  cancelOrder,
-  clearCurrentOrder,
-} = orderSlice.actions;
+export const { fetchOrders, fetchOrderById, cancelOrder, clearCurrentOrder } = orderSlice.actions;
 
 // Export selectors
 export const selectOrders = (state: { order: OrderSliceState }) => state.order.orders;
@@ -134,4 +127,3 @@ export const selectOrderLoading = (state: { order: OrderSliceState }) => state.o
 export const selectOrderError = (state: { order: OrderSliceState }) => state.order.error;
 
 export default orderSlice.reducer;
-

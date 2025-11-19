@@ -1,54 +1,26 @@
 import { apiClient } from '@/utils/api.utils';
-function handleApiError(error: any, endpoint: any) {
-  console.error(`Lỗi khi gọi API tại ${endpoint}:`, error.message || error);
-}
 
 export const getNewestProducts = async () => {
-  const endpoint = '/home/newest';
-  try {
-    const response = await apiClient.get(endpoint);
-    return response.data.data;
-  } catch (error) {
-    handleApiError(error, endpoint);
-  }
+  const response = await apiClient.get('/home/newest');
+  return response.data.data;
 };
 
 export const getBestSellingProducts = async () => {
-  const endpoint = '/home/best-selling';
-  try {
-    const response = await apiClient.get(endpoint);
-    return response.data.data;
-  } catch (error) {
-    handleApiError(error, endpoint);
-  }
+  const response = await apiClient.get('/home/best-selling');
+  return response.data.data;
 };
 
 export const getMostViewedProducts = async () => {
-  const endpoint = '/home/most-viewed';
-  try {
-    const response = await apiClient.get(endpoint);
-    return response.data.data;
-  } catch (error) {
-    handleApiError(error, endpoint);
-  }
+  const response = await apiClient.get('/home/most-viewed');
+  return response.data.data;
 };
 
 export const getTopDiscountProducts = async () => {
-  const endpoint = '/home/top-discount';
-  try {
-    const response = await apiClient.get(endpoint);
-    return response.data.data;
-  } catch (error) {
-    handleApiError(error, endpoint);
-  }
+  const response = await apiClient.get('/home/top-discount');
+  return response.data.data;
 };
 
 export const getHomeProducts = async () => {
-  const endpoint = '/home/products';
-  try {
-    const response = await apiClient.get(endpoint);
-    return response.data.data;
-  } catch (error) {
-    handleApiError(error, endpoint);
-  }
+  const response = await apiClient.get('/home/products');
+  return response.data.data;
 };
