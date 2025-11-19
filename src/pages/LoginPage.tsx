@@ -20,6 +20,16 @@ const LoginPage = () => {
   const { toast } = useToast();
   const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
+  // Get redirect path from URL params
+  const redirectPath = searchParams.get('redirect') || '/';
+
+  // Redirect if already authenticated on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(redirectPath, { replace: true });
+    }
+  }, []);
+
   // Handle Google OAuth callback
   useEffect(() => {
     const token = searchParams.get('token');
@@ -27,17 +37,6 @@ const LoginPage = () => {
       dispatch(handleGoogleCallback(token));
     }
   }, [searchParams, dispatch]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      toast({
-        variant: 'success',
-        title: 'Chào mừng bạn đã trở lại',
-        description: 'Đăng nhập thành công!',
-      });
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate, toast]);
 
   useEffect(() => {
     if (error) {
@@ -69,14 +68,30 @@ const LoginPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    dispatch(loginUser({ email, password }));
+    try {
+      await dispatch(loginUser({ email, password })).unwrap();
+      
+      // Login successful
+      toast({
+        variant: 'success',
+        title: 'Chào mừng bạn đã trở lại',
+        description: 'Đăng nhập thành công!',
+      });
+      
+      // Redirect after short delay
+      setTimeout(() => {
+        navigate(redirectPath, { replace: true });
+      }, 500);
+    } catch (err) {
+      // Error handling is done in useEffect
+    }
   };
 
   return (
