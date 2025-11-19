@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { registerUser, verifyAccount, resetError, resetRegisterState } from '@/redux/slices/auth.slice';
@@ -23,11 +23,15 @@ const RegisterPage = () => {
   }>({});
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [searchParams] = useSearchParams();
 
   const otpRef = useRef<OtpInputRef>(null);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Get redirect path from URL params
+  const redirectPath = searchParams.get('redirect') || '/';
 
   const {
     loading,
@@ -39,6 +43,13 @@ const RegisterPage = () => {
     otpError
   } = useAppSelector((state) => state.auth);
 
+  // Redirect if already authenticated on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(redirectPath, { replace: true });
+    }
+  }, []);
+
   // Countdown timer for resend OTP
   useEffect(() => {
     if (needsVerification && countdown > 0) {
@@ -48,17 +59,6 @@ const RegisterPage = () => {
       setCanResend(true);
     }
   }, [countdown, needsVerification]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      toast({
-        variant: 'success',
-        title: 'Đăng ký thành công',
-        description: 'Chào mừng bạn đến UTE Shop!',
-      });
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate, toast]);
 
   useEffect(() => {
     if (error) {
@@ -137,9 +137,25 @@ const RegisterPage = () => {
     dispatch(registerUser({ fullName, email, password, confirmPassword }));
   };
 
-  const handleVerifyOtp = (otp: string) => {
+  const handleVerifyOtp = async (otp: string) => {
     if (registerEmail && registerPassword && fullName) {
-      dispatch(verifyAccount({ email: registerEmail, password: registerPassword, fullName, otp }));
+      try {
+        await dispatch(verifyAccount({ email: registerEmail, password: registerPassword, fullName, otp })).unwrap();
+        
+        // Verification successful
+        toast({
+          variant: 'success',
+          title: 'Đăng ký thành công',
+          description: 'Chào mừng bạn đến với UTE Shop!',
+        });
+        
+        // Redirect after short delay
+        setTimeout(() => {
+          navigate(redirectPath, { replace: true });
+        }, 500);
+      } catch (err) {
+        // Error handling is done in useEffect
+      }
     }
   };
 

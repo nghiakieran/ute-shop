@@ -7,6 +7,7 @@ import { Button } from './Button';
 // (Bạn nên định nghĩa kiểu này ở một file .types.ts riêng)
 interface ProductApi {
   id: number;
+  slug: string;
   productName: string;
   displayStatus: boolean;
   ratingAvg: number;
@@ -49,7 +50,7 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
       className="group relative bg-card rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
     >
       <Link
-        to={`/products/${product.id}`}
+        to={`/products/${product.slug || product.id}`}
         className="block relative aspect-[3/4] overflow-hidden bg-muted"
       >
         <img
@@ -116,11 +117,10 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
             {[...Array(5)].map((_, i) => (
               <svg
                 key={i}
-                className={`w-4 h-4 ${
-                  i < Math.floor(product.ratingAvg)
+                className={`w-4 h-4 ${i < Math.floor(product.ratingAvg)
                     ? 'text-yellow-400 fill-current'
                     : 'text-gray-300'
-                }`}
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
