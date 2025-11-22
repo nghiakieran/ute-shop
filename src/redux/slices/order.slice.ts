@@ -5,7 +5,7 @@
 
 import { createAppSlice } from '../createAppSlice';
 import { getOrders } from '@/utils/order.api';
-import type { Bill } from '@/types/order';
+import type { Bill } from '@/types/order.d.ts';
 
 interface OrderSliceState {
   orders: Bill[];
@@ -53,7 +53,7 @@ export const orderSlice = createAppSlice({
 
     // ==================== FETCH ORDER BY ID ====================
     fetchOrderById: create.asyncThunk(
-      async (id: string, { rejectWithValue }) => {
+      async (_, { rejectWithValue }) => {
         try {
           // TODO: Implement API call
           throw new Error('Not implemented');
@@ -80,7 +80,7 @@ export const orderSlice = createAppSlice({
 
     // ==================== CANCEL ORDER ====================
     cancelOrder: create.asyncThunk(
-      async (id: string, { rejectWithValue }) => {
+      async (_, { rejectWithValue }) => {
         try {
           // TODO: Implement API call
           throw new Error('Not implemented');
