@@ -23,13 +23,14 @@ import productReducer from './slices/product.slice';
 import cartReducer from './slices/cart.slice';
 import orderReducer from './slices/order.slice';
 import wishlistReducer from './slices/wishlist.slice';
+import { adminProductReducer } from './slices/admin/productManage.slice';
 
 // Persist config
 const persistConfig = {
   key: 'uteshop-root',
   version: 1,
   storage,
-  whitelist: ['auth', 'cart', 'wishlist'], // Persist auth, cart, and wishlist state
+  whitelist: ['auth', 'cart', 'wishlist'],
 };
 
 // Combine reducers
@@ -40,6 +41,7 @@ const rootReducer = combineReducers({
   cart: cartReducer,
   order: orderReducer,
   wishlist: wishlistReducer,
+  productManage: adminProductReducer,
 });
 
 // Create persisted reducer
@@ -63,4 +65,3 @@ export const persistor = persistStore(store);
 // Infer types
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
-

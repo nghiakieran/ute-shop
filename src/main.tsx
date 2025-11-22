@@ -10,9 +10,9 @@ import { AppProviders } from './providers';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <AppProviders>
-      <App />
-    </AppProviders>
-  </StrictMode>
+  // <StrictMode>
+  <AppProviders>
+    <App />
+  </AppProviders>
+  // </StrictMode>
 );
