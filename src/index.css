@@ -11,8 +11,7 @@ All colors MUST be HSL.
 */
 
 @layer base {
-  :root {
-    /* European Fashion Color Palette */
+  .user-theme {
     --background: 40 15% 98%;
     --foreground: 0 0% 15%;
 
@@ -22,18 +21,15 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 15%;
 
-    /* Charcoal - Primary brand color */
     --primary: 0 0% 20%;
     --primary-foreground: 40 15% 98%;
 
-    /* Warm Beige - Secondary */
     --secondary: 40 20% 90%;
     --secondary-foreground: 0 0% 20%;
 
     --muted: 40 15% 94%;
     --muted-foreground: 0 0% 45%;
 
-    /* Accent - Warm Sand */
     --accent: 35 30% 75%;
     --accent-foreground: 0 0% 20%;
 
@@ -44,8 +40,6 @@ All colors MUST be HSL.
     --input: 40 15% 88%;
     --ring: 0 0% 20%;
 
-    --radius: 0rem;
-
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 20%;
     --sidebar-primary: 0 0% 20%;
@@ -54,6 +48,53 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 20%;
     --sidebar-border: 40 15% 88%;
     --sidebar-ring: 0 0% 20%;
+  }
+  .admin-theme {
+    --background: 0 0% 98%;
+    --foreground: 224 71% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 239 84% 77%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 71% 4%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 239 84% 67%;
+    --accent-foreground: 0 0% 100%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 239 84% 67%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 224 71% 4%;
+    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 224 71% 4%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 239 84% 67%;
   }
 
   .dark {
@@ -93,6 +134,52 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 40 15% 98%;
     --sidebar-border: 0 0% 25%;
     --sidebar-ring: 40 15% 88%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 224 71% 5%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 224 71% 5%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 239 84% 77%;
+
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 215 28% 17%;
+    --muted-foreground: 217 11% 65%;
+
+    --accent: 239 84% 67%;
+    --accent-foreground: 0 0% 100%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 239 84% 67%;
+
+    --sidebar-background: 224 71% 5%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 28% 17%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 215 28% 17%;
+    --sidebar-ring: 239 84% 67%;
   }
 }
 

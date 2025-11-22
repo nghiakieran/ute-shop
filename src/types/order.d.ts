@@ -2,7 +2,7 @@
  * Order/Bill Types
  */
 
-type Bill = {
+export type Bill = {
   id: number;
   totalPrice: number;
   discount: number;
@@ -18,33 +18,33 @@ type Bill = {
   items: LineItem[];
 };
 
-type User = {
+export type User = {
   id: number;
   email: string;
   fullName: string;
 };
 
-type Payment = {
+export type Payment = {
   id: number;
   amount: number;
   status: string;
 };
 
-type LineItem = {
+export type LineItem = {
   id: number;
   quantity: number;
   price: number;
   product: Product;
 };
 
-type Product = {
+export type Product = {
   id: number;
   productName: string;
   unitPrice: number;
   images: Image[];
 };
 
-type Image = {
+export type Image = {
   id: number;
   url: string;
 };
