@@ -42,7 +42,7 @@ export default function Products() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const itemsPerPage = meta?.limit || 20;
+  const itemsPerPage = meta?.limit || 10;
 
   useEffect(() => {
     const filters: { [key: string]: any } = {
