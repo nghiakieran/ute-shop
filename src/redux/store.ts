@@ -24,6 +24,7 @@ import cartReducer from './slices/cart.slice';
 import orderReducer from './slices/order.slice';
 import wishlistReducer from './slices/wishlist.slice';
 import { adminProductReducer } from './slices/admin/productManage.slice';
+import { adminBrandsCategorieseducer } from './slices/admin/brandCategoryManage.slice';
 
 // Persist config
 const persistConfig = {
@@ -42,6 +43,7 @@ const rootReducer = combineReducers({
   order: orderReducer,
   wishlist: wishlistReducer,
   productManage: adminProductReducer,
+  brandsCategoriesManage: adminBrandsCategorieseducer,
 });
 
 // Create persisted reducer
