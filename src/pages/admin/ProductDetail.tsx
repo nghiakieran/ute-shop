@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,46 +15,200 @@ import {
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import {
+  fetchProductDetailById,
+  fetchBrands,
+  fetchCategories,
+  updateProduct,
+  resetProduct,
+  addProduct,
+} from '@/redux/slices/admin/productManage.slice';
+import { ProductPayload } from '@/types/product';
+
+interface Attribute {
+  name: string;
+  values: any[];
+}
+
+interface LocalProductData {
+  id: string;
+  name: string;
+  category: string;
+  brand: string;
+  price: string;
+  cost: string;
+  stock: number;
+  status: string;
+  description: string;
+  oldImages: string[];
+  newImages: File[];
+  newImagePreviews: string[];
+  attributes: Attribute[];
+}
+
+const initialProductData: LocalProductData = {
+  id: '',
+  name: '',
+  category: '',
+  brand: '',
+  price: '',
+  cost: '',
+  stock: 0,
+  status: 'discontinued',
+  description: '',
+  oldImages: [],
+  newImages: [],
+  newImagePreviews: [],
+  attributes: [],
+};
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Mock data - would come from API/database
-  const [productData, setProductData] = useState({
-    id: id || '1',
-    name: 'Áo thun basic trắng',
-    category: 'ao',
-    brand: 'fashion-pro',
-    price: '299000',
-    cost: '150000',
-    stock: 45,
-    status: 'in_stock',
-    description: 'Áo thun basic chất liệu cotton 100%, form rộng thoải mái',
-    images: [
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400',
-      'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400',
-    ],
-    attributes: [
-      { name: 'Màu sắc', values: ['Trắng', 'Đen', 'Xám'] },
-      { name: 'Size', values: ['S', 'M', 'L', 'XL'] },
-    ],
-  });
+  const {
+    product: productFromRedux,
+    brands,
+    categories,
+  } = useAppSelector((state) => state.productManage);
 
+  const [productData, setProductData] = useState<LocalProductData>(initialProductData);
   const [newAttribute, setNewAttribute] = useState({ name: '', value: '' });
 
-  const handleSave = () => {
-    toast.success('Đã cập nhật sản phẩm thành công!');
+  useEffect(() => {
+    if (id && id !== 'create') {
+      dispatch(fetchProductDetailById(id));
+    } else {
+      dispatch(resetProduct());
+      console.log(productFromRedux);
+    }
+    dispatch(fetchBrands(null));
+    dispatch(fetchCategories(null));
+  }, [dispatch, id]);
+
+  useEffect(() => {
+    if (productFromRedux && id && id !== 'create') {
+      setProductData({
+        id: productFromRedux.id?.toString() || id || '',
+        name: productFromRedux.productName || '',
+        category: productFromRedux.category?.id?.toString() || '',
+        brand: productFromRedux.brand?.id?.toString() || '',
+        price: productFromRedux.unitPrice?.toString() || '',
+        cost: productFromRedux.originalPrice?.toString() || '',
+        stock: productFromRedux.quantityStock || 0,
+        status: productFromRedux.productStatus || 'discontinued',
+        description: productFromRedux.description || '',
+        oldImages: productFromRedux.images?.map((img: any) => img.imageUrl || img.url) || [],
+        newImages: [],
+        newImagePreviews: [],
+        attributes:
+          productFromRedux.configurations?.map((conf: any) => ({
+            name: conf.name,
+            values: conf.otherConfigs || [],
+          })) || [],
+      });
+    } else {
+      setProductData(initialProductData);
+    }
+  }, [productFromRedux, id]);
+
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const fileArray = Array.from(files);
+      const newPreviews = fileArray.map((file) => URL.createObjectURL(file));
+
+      setProductData((prev) => ({
+        ...prev,
+        newImages: [...prev.newImages, ...fileArray],
+        newImagePreviews: [...prev.newImagePreviews, ...newPreviews],
+      }));
+    }
+    if (event.target.value) event.target.value = '';
   };
+
+  // 4. Kích hoạt input file ẩn
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 5. Xóa ảnh mới chọn (chưa lưu)
+  const removeNewImage = (index: number) => {
+    setProductData((prev) => {
+      const updatedFiles = prev.newImages.filter((_, i) => i !== index);
+      const updatedPreviews = prev.newImagePreviews.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        newImages: updatedFiles,
+        newImagePreviews: updatedPreviews,
+      };
+    });
+  };
+
+  const handleSave = () => {
+    const payload: ProductPayload = {
+      productName: productData.name,
+      brandId: Number(productData.brand),
+      categoryId: Number(productData.category),
+      description: productData.description,
+      originalPrice: Number(productData.cost),
+      unitPrice: Number(productData.price),
+      productStatus: productData.status,
+      quantityStock: productData.stock,
+      oldImages: productData.oldImages,
+      configurations: productData.attributes.map((attr) => ({
+        name: attr.name,
+        detail: attr.values.map((v) => v.value),
+      })),
+    };
+    console.log(payload);
+    if (productData.id) {
+      dispatch(updateProduct({ id: productData.id, payload, files: productData.newImages }))
+        .unwrap()
+        .then(() => {
+          toast.success('Tạo sản phẩm thành công!');
+          navigate('/admin/products');
+        })
+        .catch((err) => toast.error(err.message));
+    } else {
+      dispatch(
+        addProduct({
+          payload: payload,
+          files: productData.newImages,
+        })
+      )
+        .unwrap()
+        .then(() => {
+          toast.success('Tạo sản phẩm thành công!');
+          navigate('/admin/products');
+        })
+        .catch((err) => toast.error(err.message));
+    }
+  };
+
+  const generateTempId = () => Date.now().toString() + Math.random().toString(36).substring(2, 9);
 
   const handleAddAttribute = () => {
     if (newAttribute.name && newAttribute.value) {
+      const newAttributeValue = {
+        id: generateTempId(),
+        value: newAttribute.value,
+      };
       const existingAttr = productData.attributes.find((a) => a.name === newAttribute.name);
+
       if (existingAttr) {
+        const valueExists = existingAttr.values.some((v: any) => v.value === newAttribute.value);
+        if (valueExists) {
+          toast.error(`Thuộc tính "${newAttribute.value}" đã tồn tại.`);
+          return;
+        }
         setProductData({
           ...productData,
           attributes: productData.attributes.map((a) =>
-            a.name === newAttribute.name ? { ...a, values: [...a.values, newAttribute.value] } : a
+            a.name === newAttribute.name ? { ...a, values: [...a.values, newAttributeValue] } : a
           ),
         });
       } else {
@@ -62,7 +216,7 @@ export default function ProductDetail() {
           ...productData,
           attributes: [
             ...productData.attributes,
-            { name: newAttribute.name, values: [newAttribute.value] },
+            { name: newAttribute.name, values: [newAttributeValue] },
           ],
         });
       }
@@ -71,12 +225,14 @@ export default function ProductDetail() {
     }
   };
 
-  const removeAttributeValue = (attrName: string, value: string) => {
+  const removeAttributeValue = (attrName: string, valueToRemove: { id: string; value: string }) => {
     setProductData({
       ...productData,
       attributes: productData.attributes
         .map((a) =>
-          a.name === attrName ? { ...a, values: a.values.filter((v) => v !== value) } : a
+          a.name === attrName
+            ? { ...a, values: a.values.filter((v: any) => v.id !== valueToRemove.id) }
+            : a
         )
         .filter((a) => a.values.length > 0),
     });
@@ -84,11 +240,11 @@ export default function ProductDetail() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'in_stock':
+      case 'ACTIVE':
         return <Badge className="bg-success text-success-foreground">Còn hàng</Badge>;
       case 'low_stock':
         return <Badge className="bg-warning text-warning-foreground">Sắp hết</Badge>;
-      case 'out_of_stock':
+      case 'OUT_OF_STOCK':
         return <Badge className="bg-destructive text-destructive-foreground">Hết hàng</Badge>;
       default:
         return <Badge>Ngừng bán</Badge>;
@@ -97,6 +253,7 @@ export default function ProductDetail() {
 
   return (
     <div className="p-8 space-y-6 animate-fade-in">
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/products')}>
           <ArrowLeft className="h-5 w-5" />
@@ -130,13 +287,14 @@ export default function ProductDetail() {
                   onValueChange={(value) => setProductData({ ...productData, category: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ao">Áo</SelectItem>
-                    <SelectItem value="quan">Quần</SelectItem>
-                    <SelectItem value="vay">Váy</SelectItem>
-                    <SelectItem value="ao-khoac">Áo khoác</SelectItem>
+                  <SelectContent className="bg-gray-50">
+                    {categories?.map((cat: any) => (
+                      <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
+                        {cat.categoryName}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -147,13 +305,14 @@ export default function ProductDetail() {
                   onValueChange={(value) => setProductData({ ...productData, brand: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Chọn thương hiệu" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fashion-pro">Fashion Pro</SelectItem>
-                    <SelectItem value="denim-co">Denim Co</SelectItem>
-                    <SelectItem value="elegant">Elegant</SelectItem>
-                    <SelectItem value="street-style">Street Style</SelectItem>
+                  <SelectContent className="bg-gray-50">
+                    {brands?.map((brand: any) => (
+                      <SelectItem key={brand.brandId} value={brand.brandId.toString()}>
+                        {brand.brandName}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -191,7 +350,7 @@ export default function ProductDetail() {
                   type="number"
                   value={productData.stock}
                   onChange={(e) =>
-                    setProductData({ ...productData, stock: parseInt(e.target.value) })
+                    setProductData({ ...productData, stock: parseInt(e.target.value) || 0 })
                   }
                 />
               </div>
@@ -215,11 +374,11 @@ export default function ProductDetail() {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="in_stock">Còn hàng</SelectItem>
+                  <SelectContent className="bg-gray-50">
+                    <SelectItem value="ACTIVE">Còn hàng</SelectItem>
                     <SelectItem value="low_stock">Sắp hết</SelectItem>
-                    <SelectItem value="out_of_stock">Hết hàng</SelectItem>
-                    <SelectItem value="discontinued">Ngừng bán</SelectItem>
+                    <SelectItem value="OUT_OF_STOCK">Hết hàng</SelectItem>
+                    <SelectItem value="STOP_SELLING">Ngừng bán</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -233,12 +392,13 @@ export default function ProductDetail() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-2">
-                {productData.images.map((img, index) => (
-                  <div key={index} className="relative group">
+                {/* 1. Hiển thị ảnh CŨ (Old Images) */}
+                {productData.oldImages.map((img, index) => (
+                  <div key={`old-${index}`} className="relative group">
                     <img
                       src={img}
-                      alt={`Product ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg"
+                      alt={`Old Product ${index}`}
+                      className="w-full h-24 object-cover rounded-lg border border-gray-200"
                     />
                     <Button
                       size="icon"
@@ -247,7 +407,7 @@ export default function ProductDetail() {
                       onClick={() =>
                         setProductData({
                           ...productData,
-                          images: productData.images.filter((_, i) => i !== index),
+                          oldImages: productData.oldImages.filter((_, i) => i !== index),
                         })
                       }
                     >
@@ -255,8 +415,39 @@ export default function ProductDetail() {
                     </Button>
                   </div>
                 ))}
+
+                {/* 2. Hiển thị ảnh MỚI (New Images - Preview) */}
+                {productData.newImagePreviews.map((preview, index) => (
+                  <div key={`new-${index}`} className="relative group">
+                    <img
+                      src={preview}
+                      alt={`New Product ${index}`}
+                      className="w-full h-24 object-cover rounded-lg border-2 border-green-500/50" // Border xanh để phân biệt
+                    />
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeNewImage(index)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-              <Button variant="outline" className="w-full gap-2">
+
+              {/* Hidden Input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                multiple
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+
+              {/* Button Trigger */}
+              <Button variant="outline" className="w-full gap-2" onClick={triggerFileInput}>
                 <Upload className="h-4 w-4" />
                 Thêm hình ảnh
               </Button>
@@ -276,8 +467,8 @@ export default function ProductDetail() {
               <Label>{attr.name}</Label>
               <div className="flex flex-wrap gap-2">
                 {attr.values.map((value) => (
-                  <Badge key={value} variant="secondary" className="gap-2">
-                    {value}
+                  <Badge key={value.id} variant="secondary" className="gap-2">
+                    {value.value}
                     <X
                       className="h-3 w-3 cursor-pointer hover:text-destructive"
                       onClick={() => removeAttributeValue(attr.name, value)}

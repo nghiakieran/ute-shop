@@ -89,13 +89,7 @@ type Order = {
   trackingNumber?: string;
 };
 
-type OrderStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'processing'
-  | 'shipped'
-  | 'delivered'
-  | 'cancelled';
+type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
 type Address = {
   fullName: string;
@@ -121,5 +115,23 @@ type Wishlist = {
   products: Product[];
   createdAt: string;
   updatedAt: string;
+};
+
+export interface ConfigurationProduct {
+  name: string;
+  detail: string[];
 }
 
+export interface ProductPayload {
+  productName: string;
+  brandId: number;
+  categoryId: number;
+  description: string;
+  originalPrice: number;
+  unitPrice: number;
+  productStatus: string;
+  quantityStock: number;
+  images: any[];
+  oldImages?: string[];
+  configurations?: ConfigurationProduct[];
+}

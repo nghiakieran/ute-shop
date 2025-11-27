@@ -27,7 +27,6 @@ export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Mock data - would come from API/database
   const [orderData, setOrderData] = useState({
     id: id || 'ORD001',
     customer: 'Nguyễn Văn A',
