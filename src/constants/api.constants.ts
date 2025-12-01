@@ -28,6 +28,13 @@ export const API_ENDPOINTS = {
   GET_PRODUCT: '/products/:id',
   GET_CATEGORIES: '/categories',
 
+  // Cart
+  GET_CART: '/cart',
+  ADD_TO_CART: '/cart',
+  UPDATE_CART_ITEM: '/cart/:cartItemId',
+  REMOVE_CART_ITEM: '/cart/:cartItemId',
+  CLEAR_CART: '/cart',
+
   // Orders/Bills
   GET_ORDERS: '/bills/orders',
 } as const;

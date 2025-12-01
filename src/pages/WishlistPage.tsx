@@ -16,6 +16,8 @@ import { addToCart } from '@/redux/slices/cart.slice';
 import { Button } from '@/components';
 import { useToast } from '@/hooks';
 import { MainLayout } from '@/layouts';
+import { ProductColor, ProductSize } from '@/types/product';
+import { Product } from '@/types/order';
 
 const WishlistPage = () => {
   const dispatch = useAppDispatch();
@@ -45,10 +47,8 @@ const WishlistPage = () => {
 
     dispatch(
       addToCart({
-        product,
+        productId: product.id,
         quantity: 1,
-        size: defaultSize,
-        color: defaultColor,
       })
     );
 
@@ -163,11 +163,10 @@ const WishlistPage = () => {
                         {[...Array(5)].map((_, i) => (
                           <svg
                             key={i}
-                            className={`w-4 h-4 ${
-                              i < Math.floor(product.rating)
-                                ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
-                            }`}
+                            className={`w-4 h-4 ${i < Math.floor(product.rating)
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                              }`}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
