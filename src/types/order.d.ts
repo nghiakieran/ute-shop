@@ -38,6 +38,9 @@ export type LineItem = {
 };
 
 export type Product = {
+  sizes: any;
+  colors: any;
+  name: any;
   id: number;
   productName: string;
   unitPrice: number;

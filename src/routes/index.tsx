@@ -88,6 +88,7 @@ export const AppRoutes = () => {
           }
         />
         <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/login-success" element={<LoginSuccessPage />} />
       </Route>
 
       <Route path="/admin" element={<AdminLayout />}>

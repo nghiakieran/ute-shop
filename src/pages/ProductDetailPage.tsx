@@ -18,20 +18,19 @@ import 'swiper/css/zoom';
 import { useAppDispatch } from '@/redux/hooks';
 import { addToCart } from '@/redux/slices/cart.slice';
 import { Button, Loading } from '@/components';
-import { useToast, useAuth } from '@/hooks';
+import { useAuth } from '@/hooks';
 import { MainLayout } from '@/layouts';
 import { getProductDetail } from '@/utils/product.api';
+import toast from 'react-hot-toast';
 
 const ProductDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { toast } = useToast();
   const { isAuthenticated } = useAuth();
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
 
@@ -48,28 +47,20 @@ const ProductDetailPage = () => {
       setProduct(data);
     } catch (error) {
       console.error('Error loading product:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load product details',
-      });
+      toast.error('Failed to load product details');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) {
       return;
     }
 
     // Check if user is authenticated
     if (!isAuthenticated) {
-      toast({
-        variant: 'destructive',
-        title: 'Authentication Required',
-        description: 'Please login to add items to your cart',
-      });
+      toast.error('Please login to add items to your cart');
       // Save current location to redirect back after login
       const currentPath = window.location.pathname;
       navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
@@ -77,50 +68,67 @@ const ProductDetailPage = () => {
     }
 
     // Check if product is out of stock
-    if (product.quantityStock === 0 || product.productStatus === 'OUT_OF_STOCK') {
-      toast({
-        variant: 'destructive',
-        title: 'Out of Stock',
-        description: 'This product is currently out of stock',
-      });
+    if (product.quantityStock === 0) {
+      toast.error('This product is currently out of stock');
       return;
     }
 
     // Check if requested quantity exceeds available stock
     if (quantity > product.quantityStock) {
-      toast({
-        variant: 'destructive',
-        title: 'Insufficient Stock',
-        description: `Only ${product.quantityStock} items available`,
-      });
+      toast.error(`Only ${product.quantityStock} items available`);
       return;
     }
 
-    dispatch(
-      addToCart({
-        product,
-        quantity,
-      })
-    );
+    console.log('Adding to cart, product:', product);
+    if (!product.id) {
+      toast.error(`Product ID missing! Keys: ${Object.keys(product).join(', ')}`);
+      return;
+    }
 
-    toast({
-      title: 'Added to cart',
-      description: `${quantity} ${quantity > 1 ? 'items' : 'item'} added to your cart`,
-    });
+    try {
+      await dispatch(
+        addToCart({
+          productId: product.id,
+          quantity,
+        })
+      ).unwrap();
+
+      // Custom toast with product image and details
+      toast.success(
+        (_t: any) => (
+          <div className="flex items-center gap-3">
+            <img
+              src={product.images?.[0]?.url || 'https://via.placeholder.com/48'}
+              alt={product.productName}
+              className="w-12 h-12 object-cover rounded"
+            />
+            <div className="flex-1">
+              <p className="font-medium text-sm">{product.productName}</p>
+              <p className="text-xs text-muted-foreground">x{quantity}</p>
+            </div>
+          </div>
+        ),
+        {
+          duration: 3000,
+          position: 'bottom-right',
+        }
+      );
+    } catch (error: any) {
+      toast.error(error || 'Failed to add to cart. Please try again later', {
+        duration: 4000,
+        position: 'bottom-right',
+      });
+    }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!product) {
       return;
     }
 
     // Check if user is authenticated
     if (!isAuthenticated) {
-      toast({
-        variant: 'destructive',
-        title: 'Authentication Required',
-        description: 'Please login to purchase items',
-      });
+      toast.error('Please login to purchase items');
       // Save current location to redirect back after login
       const currentPath = window.location.pathname;
       navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
@@ -128,38 +136,34 @@ const ProductDetailPage = () => {
     }
 
     // Check if product is out of stock
-    if (product.quantityStock === 0 || product.productStatus === 'OUT_OF_STOCK') {
-      toast({
-        variant: 'destructive',
-        title: 'Out of Stock',
-        description: 'This product is currently out of stock',
-      });
+    if (product.quantityStock === 0) {
+      toast.error('This product is currently out of stock');
       return;
     }
 
     // Check if requested quantity exceeds available stock
     if (quantity > product.quantityStock) {
-      toast({
-        variant: 'destructive',
-        title: 'Insufficient Stock',
-        description: `Only ${product.quantityStock} items available`,
-      });
+      toast.error(`Only ${product.quantityStock} items available`);
       return;
     }
 
-    dispatch(
-      addToCart({
-        product,
-        quantity,
-      })
-    );
+    try {
+      await dispatch(
+        addToCart({
+          productId: product.id,
+          quantity,
+        })
+      ).unwrap();
 
-    toast({
-      title: 'Purchase initiated',
-      description: 'Redirecting to cart...',
-    });
+      toast.success('Redirecting to cart...');
 
-    navigate('/cart');
+      navigate('/cart');
+    } catch (error: any) {
+      toast.error(error || 'Failed to add to cart. Please try again later', {
+        duration: 4000,
+        position: 'bottom-right',
+      });
+    }
   };
 
   if (loading) {
@@ -318,8 +322,8 @@ const ProductDetailPage = () => {
                       <Star
                         key={i}
                         className={`w-5 h-5 ${i < Math.floor(product.ratingAvg || 0)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
+                          ? 'text-yellow-400 fill-current'
+                          : 'text-gray-300'
                           }`}
                       />
                     ))}
@@ -392,9 +396,9 @@ const ProductDetailPage = () => {
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                 </Button>
-                <Button 
-                  onClick={handleBuyNow} 
-                  className="flex-1" 
+                <Button
+                  onClick={handleBuyNow}
+                  className="flex-1"
                   disabled={isOutOfStock}
                 >
                   {isOutOfStock ? 'Out of Stock' : 'Buy Now'}
