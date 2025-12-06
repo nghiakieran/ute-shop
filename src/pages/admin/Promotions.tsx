@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,56 +9,105 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Percent } from 'lucide-react';
+import { Plus, Edit, Trash2, Percent, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { apiClient } from '@/utils';
 import { Badge } from '@/components/ui/badge';
+interface Product {
+  id: number;
+  productName: string;
+}
 
-const promotions = [
-  {
-    id: 1,
-    name: 'Giảm giá mùa hè',
-    type: 'campaign',
-    discount: '20%',
-    products: 45,
-    startDate: '2024-06-01',
-    endDate: '2024-08-31',
-    status: 'active',
-  },
-  {
-    id: 2,
-    name: 'Flash sale cuối tuần',
-    type: 'campaign',
-    discount: '30%',
-    products: 12,
-    startDate: '2024-01-20',
-    endDate: '2024-01-21',
-    status: 'active',
-  },
-  {
-    id: 3,
-    name: 'Khuyến mãi sản phẩm mới',
-    type: 'product',
-    discount: '15%',
-    products: 8,
-    startDate: '2024-01-15',
-    endDate: '2024-02-15',
-    status: 'active',
-  },
-];
+interface DiscountCampaign {
+  id: number;
+  name: string;
+  description: string;
+  percentage: number;
+  active: boolean;
+  startDate: string;
+  endDate: string;
+  productIDs: number[];
+}
 
 export default function Promotions() {
-  const getTypeBadge = (type: string) => {
-    return type === 'campaign' ? (
-      <Badge className="bg-primary/10 text-primary">Chiến dịch</Badge>
-    ) : (
-      <Badge className="bg-success/10 text-success">Sản phẩm</Badge>
-    );
+  const navigate = useNavigate();
+
+  // State quản lý dữ liệu và trạng thái loading
+  const [promotions, setPromotions] = useState<DiscountCampaign[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+  });
+
+  // Hàm gọi API lấy danh sách
+  const fetchPromotions = async () => {
+    try {
+      setLoading(true);
+
+      const response = await apiClient.get(`http://localhost:3009/ute-shop/api/admin/discounts`, {
+        params: {
+          page: pagination.page,
+          limit: pagination.limit,
+        },
+      });
+
+      const responseData = response.data.data;
+
+      if (responseData.data && Array.isArray(responseData.data)) {
+        setPromotions(responseData.data);
+        setPagination((prev) => ({
+          ...prev,
+          total: responseData.meta.total,
+        }));
+      } else {
+        setPromotions(responseData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch promotions:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getStatusBadge = (status: string) => {
-    return status === 'active' ? (
-      <Badge className="bg-success/10 text-success">Đang chạy</Badge>
-    ) : (
-      <Badge className="bg-muted text-muted-foreground">Đã kết thúc</Badge>
+  useEffect(() => {
+    fetchPromotions();
+  }, [pagination.page]);
+
+  // Hàm xóa khuyến mãi
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa chương trình này?')) return;
+
+    try {
+      await apiClient.delete(`http://localhost:3009/ute-shop/api/admin/discounts/${id}`);
+      setPromotions((prev) => prev.filter((p) => p.id !== id));
+    } catch (error) {
+      console.error('Failed to delete:', error);
+    }
+  };
+
+  const getStatusBadge = (promo: DiscountCampaign) => {
+    const now = new Date();
+    const end = new Date(promo.endDate);
+
+    if (now > end) {
+      return (
+        <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-200 border-none shadow-none">
+          Đã kết thúc
+        </Badge>
+      );
+    }
+
+    if (now > end) {
+      return <Badge className="bg-muted text-muted-foreground">Đã kết thúc</Badge>;
+    }
+
+    return (
+      <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-none">
+        Đang chạy
+      </Badge>
     );
   };
 
@@ -68,7 +118,10 @@ export default function Promotions() {
           <h1 className="text-3xl font-bold">Quản lý khuyến mãi</h1>
           <p className="text-muted-foreground mt-1">Tạo và quản lý các chương trình khuyến mãi</p>
         </div>
-        <Button className="gap-2 gradient-primary shadow-elegant">
+        <Button
+          className="gap-2 gradient-primary shadow-elegant"
+          onClick={() => navigate('/admin/promotions/create')}
+        >
           <Plus className="h-4 w-4" />
           Tạo khuyến mãi
         </Button>
@@ -87,9 +140,8 @@ export default function Promotions() {
               <TableRow>
                 <TableHead>ID</TableHead>
                 <TableHead>Tên chương trình</TableHead>
-                <TableHead>Loại</TableHead>
                 <TableHead>Giảm giá</TableHead>
-                <TableHead>Sản phẩm</TableHead>
+                <TableHead>Sản phẩm áp dụng</TableHead>
                 <TableHead>Bắt đầu</TableHead>
                 <TableHead>Kết thúc</TableHead>
                 <TableHead>Trạng thái</TableHead>
@@ -97,36 +149,68 @@ export default function Promotions() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {promotions.map((promo) => (
-                <TableRow key={promo.id} className="hover:bg-muted/50 transition-colors">
-                  <TableCell className="font-medium">#{promo.id}</TableCell>
-                  <TableCell>{promo.name}</TableCell>
-                  <TableCell>{getTypeBadge(promo.type)}</TableCell>
-                  <TableCell className="font-semibold text-success">{promo.discount}</TableCell>
-                  <TableCell>{promo.products} sản phẩm</TableCell>
-                  <TableCell>{promo.startDate}</TableCell>
-                  <TableCell>{promo.endDate}</TableCell>
-                  <TableCell>{getStatusBadge(promo.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-10">
+                    <div className="flex justify-center items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Đang tải dữ liệu...
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : promotions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
+                    Chưa có chương trình khuyến mãi nào.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                promotions.map((promo) => (
+                  <TableRow key={promo.id} className="hover:bg-muted/50 transition-colors">
+                    <TableCell className="font-medium">#{promo.id}</TableCell>
+                    <TableCell>
+                      <div className="font-medium">{promo.name}</div>
+                      <div className="text-xs text-muted-foreground truncate max-w-[200px]">
+                        {promo.description}
+                      </div>
+                    </TableCell>
+
+                    {/* Hiển thị phần trăm */}
+                    <TableCell className="font-semibold text-success">
+                      {promo.percentage}%
+                    </TableCell>
+
+                    {/* Đếm số lượng sản phẩm từ mảng products */}
+                    <TableCell>{promo.productIDs?.length || 0} sản phẩm</TableCell>
+
+                    {/* Format ngày tháng */}
+                    <TableCell>{format(new Date(promo.startDate), 'dd/MM/yyyy')}</TableCell>
+                    <TableCell>{format(new Date(promo.endDate), 'dd/MM/yyyy')}</TableCell>
+
+                    <TableCell>{getStatusBadge(promo)}</TableCell>
+
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-primary/10 hover:text-primary"
+                          onClick={() => navigate(`/admin/promotions/edit/${promo.id}`)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => handleDelete(promo.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

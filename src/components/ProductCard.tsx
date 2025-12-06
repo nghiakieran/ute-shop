@@ -15,7 +15,7 @@ interface ProductApi {
   unitPrice: number;
   productStatus: 'ACTIVE' | 'OUT_OF_STOCK';
   brand?: { brandName: string };
-  discountDetail?: { percentage: number };
+  discountCampaign?: { percentage: number };
   category?: { categoryName: string };
   images: { url: string }[];
   newArrival?: boolean;
@@ -35,7 +35,7 @@ const formatPrice = (price: number) => {
 };
 
 export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCardProps) => {
-  const discountPercentage = product.discountDetail?.percentage || 0;
+  const discountPercentage = product.discountCampaign?.percentage || 0;
   const hasDiscount = product.originalPrice > product.unitPrice;
   const imageUrl =
     product.images && product.images.length > 0

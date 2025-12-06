@@ -33,7 +33,7 @@ interface ProductApi {
   unitPrice: number;
   productStatus: 'ACTIVE' | 'OUT_OF_STOCK';
   brand: { brandName: string };
-  discountDetail: { percentage: number };
+  discountCampaign: { percentage: number };
   category: { categoryName: string };
   images: { url: string }[];
   newArrival?: boolean;

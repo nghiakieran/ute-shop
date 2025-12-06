@@ -177,8 +177,8 @@ const ProductDetailPage = () => {
     );
   }
 
-  const hasDiscount = product.discountDetail && product.discountDetail.percentage > 0;
-  const discountPercentage = product.discountDetail?.percentage || 0;
+  const hasDiscount = product.discountCampaign && product.discountCampaign.percentage > 0;
+  const discountPercentage = product.discountCampaign?.percentage || 0;
   const finalPrice = product.unitPrice;
   const originalPrice = product.originalPrice;
   const isOutOfStock = product.quantityStock === 0 || product.productStatus === 'OUT_OF_STOCK';
