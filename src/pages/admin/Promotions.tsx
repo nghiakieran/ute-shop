@@ -14,6 +14,17 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { apiClient } from '@/utils';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import toast from 'react-hot-toast';
 interface Product {
   id: number;
   productName: string;
@@ -33,7 +44,8 @@ interface DiscountCampaign {
 export default function Promotions() {
   const navigate = useNavigate();
 
-  // State quản lý dữ liệu và trạng thái loading
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [promotions, setPromotions] = useState<DiscountCampaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -76,15 +88,24 @@ export default function Promotions() {
     fetchPromotions();
   }, [pagination.page]);
 
-  // Hàm xóa khuyến mãi
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa chương trình này?')) return;
+    setDeleteId(id);
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    setIsDeleting(true);
     try {
-      await apiClient.delete(`http://localhost:3009/ute-shop/api/admin/discounts/${id}`);
-      setPromotions((prev) => prev.filter((p) => p.id !== id));
+      await apiClient.delete(`http://localhost:3009/ute-shop/api/admin/discounts/${deleteId}`);
+      fetchPromotions();
+      toast.success('Đã xóa thành công. Chương trình khuyến mãi đã được xóa khỏi hệ thống.');
     } catch (error) {
       console.error('Failed to delete:', error);
+      toast.error('Có lỗi xảy ra khi xóa dữ liệu.');
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -100,7 +121,7 @@ export default function Promotions() {
       );
     }
 
-    if (now > end) {
+    if (!promo.active) {
       return <Badge className="bg-muted text-muted-foreground">Đã kết thúc</Badge>;
     }
 
@@ -215,6 +236,38 @@ export default function Promotions() {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="sm:max-w-[550px] bg-white border border-slate-200 shadow-xl z-50 p-6">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Chương trình khuyến mãi này sẽ bị xóa vĩnh viễn khỏi
+              hệ thống.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Hủy bỏ</AlertDialogCancel>
+
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang xóa...
+                </>
+              ) : (
+                'Xóa ngay'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -36,7 +36,7 @@ const formatPrice = (price: number) => {
 
 export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCardProps) => {
   const discountPercentage = product.discountCampaign?.percentage || 0;
-  const hasDiscount = product.originalPrice > product.unitPrice;
+  const hasDiscount = discountPercentage > 0;
   const imageUrl =
     product.images && product.images.length > 0
       ? product.images[0].url
@@ -117,10 +117,11 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
             {[...Array(5)].map((_, i) => (
               <svg
                 key={i}
-                className={`w-4 h-4 ${i < Math.floor(product.ratingAvg)
+                className={`w-4 h-4 ${
+                  i < Math.floor(product.ratingAvg)
                     ? 'text-yellow-400 fill-current'
                     : 'text-gray-300'
-                  }`}
+                }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -139,11 +140,11 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
         {/* Price */}
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-foreground">
-            {formatPrice(product.unitPrice)}
+            {formatPrice(product.unitPrice * (1 - discountPercentage / 100))}
           </span>
           {hasDiscount && (
             <span className="text-sm text-muted-foreground line-through">
-              {formatPrice(product.originalPrice)}
+              {formatPrice(product.unitPrice)}
             </span>
           )}
         </div>

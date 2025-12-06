@@ -15,17 +15,15 @@ const API_URL = 'http://localhost:3009/ute-shop/api/admin/';
 
 export default function CreatePromotion() {
   const navigate = useNavigate();
-  const { id } = useParams(); // Lấy ID từ URL (nếu có)
+  const { id } = useParams();
   const { toast } = useToast();
 
-  // Xác định chế độ Edit dựa vào việc có ID hay không
   const isEditMode = Boolean(id);
 
-  // State
   const [products, setProducts] = useState<any[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingDetail, setIsLoadingDetail] = useState(false); // Loading khi lấy detail
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   const [searchProduct, setSearchProduct] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
@@ -38,29 +36,24 @@ export default function CreatePromotion() {
     isActive: true,
   });
 
-  // Helper: Format date từ ISO sang YYYY-MM-DD cho input date
   const formatDateForInput = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toISOString().split('T')[0];
   };
 
-  // Effect: Load Products & Campaign Detail (nếu là Edit)
   useEffect(() => {
     const fetchData = async () => {
       setIsLoadingProducts(true);
       try {
-        // 1. Luôn load danh sách sản phẩm trước
         const productRes = await apiClient.get(`${API_URL}products`);
         setProducts(productRes.data.data.data || productRes.data);
 
-        // 2. Nếu là Edit Mode, load thông tin chiến dịch
         if (isEditMode) {
           setIsLoadingDetail(true);
           const detailRes = await apiClient.get(`${API_URL}discounts/${id}`);
-          const data = detailRes.data.data; // Tùy cấu trúc BE trả về
+          const data = detailRes.data.data;
 
-          // Map dữ liệu vào form
           setFormData({
             name: data.name,
             description: data.description || '',
@@ -70,9 +63,8 @@ export default function CreatePromotion() {
             isActive: data.active,
           });
 
-          // Map sản phẩm đã chọn (Lấy mảng ID từ mảng object products)
-          if (data.products && Array.isArray(data.products)) {
-            setSelectedProducts(data.products.map((p: any) => p.id));
+          if (data.productIDs) {
+            setSelectedProducts(data.productIDs.map((p: any) => p));
           }
         }
       } catch (error) {
@@ -111,6 +103,7 @@ export default function CreatePromotion() {
 
     try {
       const payload = {
+        id: isEditMode ? Number(id) : 0,
         name: formData.name,
         description: formData.description,
         active: formData.isActive,
@@ -119,17 +112,13 @@ export default function CreatePromotion() {
         percentage: Number(formData.discount),
         productIDs: selectedProducts,
       };
-
       if (isEditMode) {
-        // --- LOGIC UPDATE ---
-        // Dùng PUT hoặc PATCH tùy BE quy định
-        await apiClient.put(`${API_URL}discounts/${id}`, payload);
+        await apiClient.put(`${API_URL}discounts`, payload);
         toast({
           title: 'Cập nhật thành công',
           description: 'Thông tin chương trình khuyến mãi đã được lưu.',
         });
       } else {
-        // --- LOGIC CREATE ---
         await apiClient.post(`${API_URL}discounts`, payload);
         toast({
           title: 'Tạo mới thành công',
@@ -137,7 +126,7 @@ export default function CreatePromotion() {
         });
       }
 
-      navigate('/promotions');
+      navigate('/admin/promotions');
     } catch (error: any) {
       console.error('Error saving promotion:', error);
       toast({
@@ -312,7 +301,7 @@ export default function CreatePromotion() {
                         ? 'bg-primary/5 border-primary'
                         : 'hover:bg-muted/50'
                     }`}
-                    onClick={() => handleProductToggle(product.id)}
+                    // onClick={() => handleProductToggle(product.id)}
                   >
                     <Checkbox
                       checked={selectedProducts.includes(product.id)}
