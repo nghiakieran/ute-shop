@@ -16,6 +16,9 @@ import {
   OrdersPage,
   CheckoutPage,
   WishlistPage,
+  VNPayReturnPage,
+  VouchersPage,
+  LoyaltyPointsPage,
 } from '@/pages';
 import LoginSuccessPage from '@/pages/LoginSuccessPage';
 import { AuthGuard, GuestGuard } from '@/guards';
@@ -88,7 +91,25 @@ export const AppRoutes = () => {
             </AuthGuard>
           }
         />
+        <Route
+          path="/vouchers"
+          element={
+            <AuthGuard>
+              <VouchersPage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/loyalty-points"
+          element={
+            <AuthGuard>
+              <LoyaltyPointsPage />
+            </AuthGuard>
+          }
+        />
         <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/login-success" element={<LoginSuccessPage />} />
+        <Route path="/payment/vnpay-return" element={<VNPayReturnPage />} />
       </Route>
 
       <Route path="/admin" element={<AdminLayout />}>

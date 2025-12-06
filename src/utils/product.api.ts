@@ -48,9 +48,7 @@ export interface PaginatedProductResponse {
 }
 
 export const filterProducts = async (params: FilterProductParams) => {
-  const response = await apiClient.get('/ute-shop/api/client/home/products/filter', {
-    params,
-  });
+  const response = await apiClient.get('/ute-shop/api/client/home/products/filter', { params });
   return response.data.data as PaginatedProductResponse;
 };
 

@@ -10,7 +10,7 @@ function App() {
   return (
     <>
       <AppRoutes />
-      <Toaster position="top-right" />
+      <Toaster position="bottom-right" />
     </>
   );
 }

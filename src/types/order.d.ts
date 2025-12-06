@@ -4,17 +4,18 @@
 
 export type Bill = {
   id: number;
-  totalPrice: number;
+  total: number;
   discount: number;
   paymentMethod: 'CASH' | 'CARD' | 'BANKING';
-  status: 'PENDING' | 'PAID' | 'CANCELLED';
-  orderNumber: number;
-  address?: string;
-  phone?: string;
+  status: 'PENDING' | 'SHIPPING' | 'PAID' | 'CANCELLED';
+  paymentStatus?: 'PENDING' | 'PAID' | 'CANCELLED';
+  billCode: string;
+  orderId: number;
+  receiverName: string | null;
+  receiverPhone: string | null;
+  shippingAddress: string | null;
+  note: string | null;
   createdAt: string;
-  updatedAt: string;
-  customer: User;
-  payment?: Payment;
   items: LineItem[];
 };
 
@@ -33,18 +34,67 @@ export type Payment = {
 export type LineItem = {
   id: number;
   quantity: number;
-  price: number;
+  unitPrice: number;
+  isReviewed: boolean;
   product: Product;
 };
 
 export type Product = {
   id: number;
   productName: string;
-  unitPrice: number;
-  images: Image[];
+  slug: string;
+  images: string[];
 };
 
 export type Image = {
   id: number;
   url: string;
+};
+
+export type CheckoutData = {
+  userId: number;
+  items: CheckoutItem[];
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  discount: number;
+  total: number;
+};
+
+export type CheckoutItem = {
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  itemTotal: number;
+  image: string | null;
+};
+
+export type CreateOrderPayload = {
+  paymentMethod: 'CASH' | 'CARD' | 'BANKING';
+  receiverName: string;
+  receiverPhone: string;
+  shippingAddress: string;
+  note?: string;
+};
+
+export type CreateOrderResponse = {
+  success?: boolean;
+  message: string;
+  billId?: number;
+  billCode?: string;
+  paymentUrl?: string;
+};
+
+export type OrderLineItem = {
+  id: number;
+  quantity: number;
+  unitPrice: number;
+  product: {
+    id: number;
+    productName: string;
+    slug: string;
+    unitPrice: number;
+    quantityStock: number;
+  };
 };

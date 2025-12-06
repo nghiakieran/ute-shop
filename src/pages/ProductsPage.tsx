@@ -13,13 +13,13 @@ import {
 } from '@/redux/slices/product.slice';
 import { addToCart } from '@/redux/slices/cart.slice';
 import { ProductCard, Button, Loading } from '@/components';
-import { useToast, useDebounce } from '@/hooks';
+import { useDebounce } from '@/hooks';
 import { MainLayout } from '@/layouts';
 import { filterProducts, FilterProductParams } from '@/utils/product.api';
+import toast from 'react-hot-toast';
 
 const ProductsPage = () => {
   const dispatch = useAppDispatch();
-  const { toast } = useToast();
   const categories = useAppSelector(selectCategories);
 
   const [showFilters, setShowFilters] = useState(false);
@@ -96,35 +96,48 @@ const ProductsPage = () => {
       });
     } catch (error) {
       console.error('Error loading products:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load products',
-      });
+      toast.error('Failed to load products');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddToCart = (product: any) => {
-    dispatch(
-      addToCart({
-        product,
-        quantity: 1,
-      })
-    );
+  const handleAddToCart = async (product: any) => {
+    try {
+      await dispatch(
+        addToCart({
+          productId: product.id,
+          quantity: 1,
+        })
+      ).unwrap();
 
-    toast({
-      title: 'Added to cart',
-      description: `${product.productName} has been added to your cart`,
-    });
+      // Custom toast with product image and details
+      toast.success(
+        (_t: any) => (
+          <div className="flex items-center gap-3">
+            <img
+              src={product.images?.[0]?.url || 'https://via.placeholder.com/48'}
+              alt={product.productName}
+              className="w-12 h-12 object-cover rounded"
+            />
+            <div className="flex-1">
+              <p className="font-medium text-sm">{product.productName}</p>
+              <p className="text-xs text-muted-foreground">x1</p>
+            </div>
+          </div>
+        ),
+        {
+          duration: 3000,
+          position: 'bottom-right',
+        }
+      );
+    } catch (error: any) {
+      toast.error(error || 'Failed to add to cart');
+    }
   };
 
   const handleAddToWishlist = (product: any) => {
-    toast({
-      title: 'Added to wishlist',
-      description: `${product.productName} has been added to your wishlist`,
-    });
+    toast.success(`${product.productName} added to wishlist`);
   };
 
   const handleClearFilters = () => {
@@ -205,8 +218,8 @@ const ProductsPage = () => {
                         setPagination({ ...pagination, page: 1 });
                       }}
                       className={`w-full text-left px-3 py-2 rounded-md transition-colors ${!selectedCategory
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-accent'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent'
                         }`}
                     >
                       All Products
@@ -219,8 +232,8 @@ const ProductsPage = () => {
                           setPagination({ ...pagination, page: 1 });
                         }}
                         className={`w-full text-left px-3 py-2 rounded-md transition-colors ${selectedCategory === Number(category.id)
-                            ? 'bg-primary text-primary-foreground'
-                            : 'hover:bg-accent'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-accent'
                           }`}
                       >
                         {category.name}
