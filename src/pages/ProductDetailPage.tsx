@@ -15,9 +15,10 @@ import 'swiper/css/free-mode';
 import 'swiper/css/navigation';
 import 'swiper/css/thumbs';
 import 'swiper/css/zoom';
-import { useAppDispatch } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { addToCart } from '@/redux/slices/cart.slice';
-import { Button, Loading } from '@/components';
+import { fetchProductReviews, selectReviews, selectReviewStats } from '@/redux/slices/review.slice';
+import { Button, Loading, ReviewCard } from '@/components';
 import { useAuth } from '@/hooks';
 import { MainLayout } from '@/layouts';
 import { getProductDetail } from '@/utils/product.api';
@@ -28,6 +29,8 @@ const ProductDetailPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isAuthenticated } = useAuth();
+  const reviews = useAppSelector(selectReviews);
+  const reviewStats = useAppSelector(selectReviewStats);
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +42,12 @@ const ProductDetailPage = () => {
       loadProduct(slug);
     }
   }, [slug]);
+
+  useEffect(() => {
+    if (product?.id) {
+      dispatch(fetchProductReviews(product.id));
+    }
+  }, [product?.id, dispatch]);
 
   const loadProduct = async (slug: string) => {
     setLoading(true);
@@ -231,10 +240,12 @@ const ProductDetailPage = () => {
             >
               {/* Main Swiper */}
               <Swiper
-                style={{
-                  '--swiper-navigation-color': '#fff',
-                  '--swiper-pagination-color': '#fff',
-                } as any}
+                style={
+                  {
+                    '--swiper-navigation-color': '#fff',
+                    '--swiper-pagination-color': '#fff',
+                  } as any
+                }
                 loop={true}
                 spaceBetween={10}
                 navigation={true}
@@ -306,14 +317,18 @@ const ProductDetailPage = () => {
                     Sale -{discountPercentage}%
                   </span>
                 )}
-                <span className="text-sm text-muted-foreground">{product.category?.categoryName}</span>
+                <span className="text-sm text-muted-foreground">
+                  {product.category?.categoryName}
+                </span>
                 <span className="text-sm text-muted-foreground">•</span>
                 <span className="text-sm text-muted-foreground">{product.brand?.brandName}</span>
               </div>
 
               {/* Title */}
               <div>
-                <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">{product.productName}</h1>
+                <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">
+                  {product.productName}
+                </h1>
 
                 {/* Rating */}
                 <div className="flex items-center gap-3">
@@ -321,10 +336,11 @@ const ProductDetailPage = () => {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-5 h-5 ${i < Math.floor(product.ratingAvg || 0)
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-gray-300'
-                          }`}
+                        className={`w-5 h-5 ${
+                          i < Math.floor(product.ratingAvg || 0)
+                            ? 'text-yellow-400 fill-current'
+                            : 'text-gray-300'
+                        }`}
                       />
                     ))}
                   </div>
@@ -348,7 +364,11 @@ const ProductDetailPage = () => {
 
               {/* Stock Status */}
               <div className="flex items-center gap-4">
-                <span className={`text-sm font-medium ${!isOutOfStock ? 'text-green-600' : 'text-red-600'}`}>
+                <span
+                  className={`text-sm font-medium ${
+                    !isOutOfStock ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
                   {!isOutOfStock ? `In Stock (${product.quantityStock} available)` : 'Out of Stock'}
                 </span>
               </div>
@@ -396,11 +416,7 @@ const ProductDetailPage = () => {
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                 </Button>
-                <Button
-                  onClick={handleBuyNow}
-                  className="flex-1"
-                  disabled={isOutOfStock}
-                >
+                <Button onClick={handleBuyNow} className="flex-1" disabled={isOutOfStock}>
                   {isOutOfStock ? 'Out of Stock' : 'Buy Now'}
                 </Button>
                 <Button variant="outline" size="default" className="px-4">
@@ -434,6 +450,85 @@ const ProductDetailPage = () => {
               </div>
             </motion.div>
           </div>
+
+          {/* Reviews Section */}
+          <div className="container-custom py-12">
+            <div className="bg-card rounded-lg border border-border p-8">
+              <h2 className="text-2xl font-serif font-bold mb-6">Đánh giá sản phẩm</h2>
+
+              {/* Rating Summary */}
+              {reviewStats && reviewStats.totalReviews > 0 && (
+                <div className="mb-8 p-6 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-8">
+                    <div className="text-center">
+                      <div className="text-5xl font-bold mb-2">
+                        {reviewStats.averageRating.toFixed(1)}
+                      </div>
+                      <div className="flex gap-1 mb-2 justify-center">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-5 h-5 ${
+                              star <= Math.round(reviewStats.averageRating)
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {reviewStats.totalReviews} đánh giá
+                      </p>
+                    </div>
+                    <div className="flex-1">
+                      {[5, 4, 3, 2, 1].map((rating) => (
+                        <div key={rating} className="flex items-center gap-3 mb-2">
+                          <span className="text-sm w-12">{rating} sao</span>
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-yellow-400 h-2 rounded-full"
+                              style={{
+                                width: `${
+                                  (reviewStats.ratingDistribution[
+                                    rating as keyof typeof reviewStats.ratingDistribution
+                                  ] /
+                                    reviewStats.totalReviews) *
+                                  100
+                                }%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-sm text-muted-foreground w-12">
+                            {
+                              reviewStats.ratingDistribution[
+                                rating as keyof typeof reviewStats.ratingDistribution
+                              ]
+                            }
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Reviews List */}
+              {!reviews || reviews.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center mb-4">
+                    <Star className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <p className="text-muted-foreground">Chưa có đánh giá nào cho sản phẩm này</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </MainLayout>
@@ -441,4 +536,3 @@ const ProductDetailPage = () => {
 };
 
 export default ProductDetailPage;
-

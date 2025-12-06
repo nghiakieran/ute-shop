@@ -23,6 +23,7 @@ import productReducer from './slices/product.slice';
 import cartReducer from './slices/cart.slice';
 import orderReducer from './slices/order.slice';
 import wishlistReducer from './slices/wishlist.slice';
+import reviewReducer from './slices/review.slice';
 import { adminProductReducer } from './slices/admin/productManage.slice';
 import { adminBrandsCategorieseducer } from './slices/admin/brandCategoryManage.slice';
 
@@ -42,6 +43,7 @@ const rootReducer = combineReducers({
   cart: cartReducer,
   order: orderReducer,
   wishlist: wishlistReducer,
+  review: reviewReducer,
   productManage: adminProductReducer,
   brandsCategoriesManage: adminBrandsCategorieseducer,
 });

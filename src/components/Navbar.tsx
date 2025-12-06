@@ -43,18 +43,14 @@ export const Navbar = () => {
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 200, damping: 30 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
-        isScrolled
-          ? 'bg-white/95 backdrop-blur-sm shadow-md'
-          : 'bg-transparent'
+        isScrolled ? 'bg-white/95 backdrop-blur-sm shadow-md' : 'bg-transparent'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <span className="font-serif text-2xl font-bold text-neutral-900">
-              UTEShop
-            </span>
+            <span className="font-serif text-2xl font-bold text-neutral-900">UTEShop</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -82,7 +78,10 @@ export const Navbar = () => {
           {/* Right Side Actions */}
           <div className="hidden md:flex items-center space-x-6">
             {/* Wishlist */}
-            <Link to="/wishlist" className="text-foreground/70 hover:text-foreground transition-colors relative">
+            <Link
+              to="/wishlist"
+              className="text-foreground/70 hover:text-foreground transition-colors relative"
+            >
               <Heart className="w-5 h-5" />
               {wishlistItemCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
@@ -92,7 +91,10 @@ export const Navbar = () => {
             </Link>
 
             {/* Cart Icon */}
-            <Link to="/cart" className="text-foreground/70 hover:text-foreground transition-colors relative">
+            <Link
+              to="/cart"
+              className="text-foreground/70 hover:text-foreground transition-colors relative"
+            >
               <ShoppingCart className="w-5 h-5" />
               {cartItemCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
@@ -126,6 +128,24 @@ export const Navbar = () => {
                   >
                     Orders
                   </Link>
+                  <Link
+                    to="/reviews"
+                    className="block px-4 py-3 text-sm text-foreground hover:bg-accent"
+                  >
+                    Đánh giá
+                  </Link>
+                  <Link
+                    to="/vouchers"
+                    className="block px-4 py-3 text-sm text-foreground hover:bg-accent"
+                  >
+                    Vouchers
+                  </Link>
+                  <Link
+                    to="/loyalty-points"
+                    className="block px-4 py-3 text-sm text-foreground hover:bg-accent"
+                  >
+                    Điểm tích lũy
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-3 text-sm text-destructive hover:bg-accent"
@@ -151,9 +171,19 @@ export const Navbar = () => {
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               )}
             </svg>
           </button>
@@ -174,7 +204,10 @@ export const Navbar = () => {
               <Link to="/products" className="text-foreground hover:text-primary font-medium">
                 Products
               </Link>
-              <Link to="/wishlist" className="text-foreground hover:text-primary font-medium flex items-center justify-between">
+              <Link
+                to="/wishlist"
+                className="text-foreground hover:text-primary font-medium flex items-center justify-between"
+              >
                 <span>Wishlist</span>
                 {wishlistItemCount > 0 && (
                   <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -182,7 +215,10 @@ export const Navbar = () => {
                   </span>
                 )}
               </Link>
-              <Link to="/cart" className="text-foreground hover:text-primary font-medium flex items-center justify-between">
+              <Link
+                to="/cart"
+                className="text-foreground hover:text-primary font-medium flex items-center justify-between"
+              >
                 <span>Cart</span>
                 {cartItemCount > 0 && (
                   <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -196,10 +232,22 @@ export const Navbar = () => {
                   <Link to="/profile" className="text-foreground hover:text-primary font-medium">
                     Profile
                   </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="text-left text-destructive font-medium"
+                  <Link to="/orders" className="text-foreground hover:text-primary font-medium">
+                    Orders
+                  </Link>
+                  <Link to="/reviews" className="text-foreground hover:text-primary font-medium">
+                    Đánh giá
+                  </Link>
+                  <Link to="/vouchers" className="text-foreground hover:text-primary font-medium">
+                    Vouchers
+                  </Link>
+                  <Link
+                    to="/loyalty-points"
+                    className="text-foreground hover:text-primary font-medium"
                   >
+                    Điểm tích lũy
+                  </Link>
+                  <button onClick={handleLogout} className="text-left text-destructive font-medium">
                     Logout
                   </button>
                 </>
@@ -215,4 +263,3 @@ export const Navbar = () => {
     </motion.nav>
   );
 };
-
