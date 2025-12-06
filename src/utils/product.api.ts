@@ -1,27 +1,27 @@
 import { apiClient } from '@/utils/api.utils';
 
 export const getNewestProducts = async () => {
-  const response = await apiClient.get('/home/newest');
+  const response = await apiClient.get('/ute-shop/api/client/home/newest');
   return response.data.data;
 };
 
 export const getBestSellingProducts = async () => {
-  const response = await apiClient.get('/home/best-selling');
+  const response = await apiClient.get('/ute-shop/api/client/home/best-selling');
   return response.data.data;
 };
 
 export const getMostViewedProducts = async () => {
-  const response = await apiClient.get('/home/most-viewed');
+  const response = await apiClient.get('/ute-shop/api/client/home/most-viewed');
   return response.data.data;
 };
 
 export const getTopDiscountProducts = async () => {
-  const response = await apiClient.get('/home/top-discount');
+  const response = await apiClient.get('/ute-shop/api/client/home/top-discount');
   return response.data.data;
 };
 
 export const getHomeProducts = async () => {
-  const response = await apiClient.get('/home/products');
+  const response = await apiClient.get('/ute-shop/api/client/home/products');
   return response.data.data;
 };
 
@@ -48,11 +48,13 @@ export interface PaginatedProductResponse {
 }
 
 export const filterProducts = async (params: FilterProductParams) => {
-  const response = await apiClient.get('/home/products/filter', { params });
+  const response = await apiClient.get('/ute-shop/api/client/home/products/filter', {
+    params,
+  });
   return response.data.data as PaginatedProductResponse;
 };
 
 export const getProductDetail = async (slug: string) => {
-  const response = await apiClient.get(`/home/products/${slug}`);
+  const response = await apiClient.get(`/ute-shop/api/client/home/products/${slug}`);
   return response.data.data;
 };
