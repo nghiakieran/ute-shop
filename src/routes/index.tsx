@@ -29,6 +29,7 @@ import { AdminLayout } from '@/layouts/AdminLayout';
 import { UserLayout } from '@/layouts/UserLayout';
 import ProductDetail from '@/pages/admin/ProductDetail';
 import OrderDetail from '@/pages/admin/OrderDetail';
+import CreatePromotion from '@/pages/admin/CreatePromotion';
 
 export const AppRoutes = () => {
   return (
@@ -99,6 +100,8 @@ export const AppRoutes = () => {
         <Route path="users" element={<Users />} />
         <Route path="orders/:id" element={<OrderDetail />} />
         <Route path="promotions" element={<Promotions />} />
+        <Route path="promotions/create" element={<CreatePromotion />} />
+        <Route path="promotions/edit/:id" element={<CreatePromotion />} />
         <Route path="brands-categories" element={<BrandsCategories />} />
       </Route>
       {/* 404 - Redirect to home */}

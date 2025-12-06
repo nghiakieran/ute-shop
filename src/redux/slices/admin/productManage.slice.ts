@@ -14,7 +14,7 @@ interface ProductsAdmin {
 
   originalPrice: number;
   unitPrice: number;
-  discountDetail: any;
+  discountCampaign: any;
 
   ratingAvg: number;
   views: number;
