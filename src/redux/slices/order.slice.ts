@@ -12,6 +12,12 @@ interface OrderSliceState {
   currentOrder: Bill | null;
   loading: boolean;
   error: string | null;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  } | null;
 }
 
 const initialState: OrderSliceState = {
@@ -19,6 +25,7 @@ const initialState: OrderSliceState = {
   currentOrder: null,
   loading: false,
   error: null,
+  pagination: null,
 };
 
 export const orderSlice = createAppSlice({
@@ -27,10 +34,18 @@ export const orderSlice = createAppSlice({
   reducers: (create) => ({
     // ==================== FETCH ORDERS ====================
     fetchOrders: create.asyncThunk(
-      async (_, { rejectWithValue }) => {
+      async (
+        params: {
+          page?: number;
+          limit?: number;
+          status?: 'PENDING' | 'SHIPPING' | 'PAID' | 'CANCELLED';
+          search?: string;
+        } = {},
+        { rejectWithValue }
+      ) => {
         try {
-          const orders = await getOrders();
-          return orders;
+          const response = await getOrders(params);
+          return response;
         } catch (error: any) {
           return rejectWithValue(error.message || 'Failed to fetch orders');
         }
@@ -42,7 +57,13 @@ export const orderSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.loading = false;
-          state.orders = action.payload;
+          state.orders = action.payload.data;
+          state.pagination = {
+            total: action.payload.total,
+            page: action.payload.page,
+            limit: action.payload.limit,
+            totalPages: action.payload.totalPages,
+          };
         },
         rejected: (state, action) => {
           state.loading = false;
@@ -125,5 +146,6 @@ export const selectOrders = (state: { order: OrderSliceState }) => state.order.o
 export const selectCurrentOrder = (state: { order: OrderSliceState }) => state.order.currentOrder;
 export const selectOrderLoading = (state: { order: OrderSliceState }) => state.order.loading;
 export const selectOrderError = (state: { order: OrderSliceState }) => state.order.error;
+export const selectOrderPagination = (state: { order: OrderSliceState }) => state.order.pagination;
 
 export default orderSlice.reducer;

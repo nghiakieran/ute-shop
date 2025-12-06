@@ -13,4 +13,6 @@ export { default as CartPage } from './CartPage';
 export { default as CheckoutPage } from './CheckoutPage';
 export { default as OrdersPage } from './OrdersPage';
 export { default as WishlistPage } from './WishlistPage';
-
+export { default as VNPayReturnPage } from './VNPayReturnPage';
+export { default as VouchersPage } from './VouchersPage';
+export { default as LoyaltyPointsPage } from './LoyaltyPointsPage';

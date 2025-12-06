@@ -3,25 +3,21 @@
  * Collect shipping and payment details before placing an order
  */
 
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CreditCard, Truck, ShieldCheck, CheckCircle2, ArrowLeft, Home } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import {
-  selectCartItems,
-  selectCartSubtotal,
-  selectCartShipping,
-  selectCartTax,
-  selectCartTotal,
-  clearCart,
-} from '@/redux/slices/cart.slice';
+import { getCart, clearCart } from '@/redux/slices/cart.slice';
 import { selectUser } from '@/redux/slices/auth.slice';
-import { Button, Input, Label } from '@/components';
+import { Button, Input, Label, Loading } from '@/components';
 import { MainLayout } from '@/layouts';
 import { useToast } from '@/hooks';
+import { getCheckoutData, createOrder } from '@/utils/order.api';
+import type { CheckoutData, CreateOrderPayload } from '@/types/order';
+import { vietnamLocations } from '@/data/vietnam-locations';
 
-type PaymentMethod = 'card' | 'cod';
+type PaymentMethod = 'CASH' | 'CARD' | 'BANKING';
 
 const initialCardState = {
   name: '',
@@ -34,30 +30,64 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { toast } = useToast();
-
-  const items = useAppSelector(selectCartItems);
-  const subtotal = useAppSelector(selectCartSubtotal);
-  const shipping = useAppSelector(selectCartShipping);
-  const tax = useAppSelector(selectCartTax);
-  const total = useAppSelector(selectCartTotal);
   const user = useAppSelector(selectUser);
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [cardDetails, setCardDetails] = useState(initialCardState);
-  const [notes, setNotes] = useState('');
+  const [note, setNote] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
-    fullName: user?.name ?? '',
-    email: user?.email ?? '',
+    fullName: user?.fullName ?? '',
     phone: user?.phone ?? '',
     address: '',
     city: '',
-    state: '',
-    postalCode: '',
-    country: 'United States',
+    ward: '',
+    district: '',
   });
 
-  if (items.length === 0) {
+  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [availableDistricts, setAvailableDistricts] = useState<
+    (typeof vietnamLocations)[0]['districts']
+  >([]);
+  const [availableWards, setAvailableWards] = useState<
+    (typeof vietnamLocations)[0]['districts'][0]['wards']
+  >([]);
+
+  useEffect(() => {
+    fetchCheckoutData();
+  }, []);
+
+  const fetchCheckoutData = async () => {
+    try {
+      setLoading(true);
+      const data = await getCheckoutData();
+      setCheckoutData(data);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to load checkout data',
+      });
+      navigate('/cart');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loading />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!checkoutData || checkoutData.items.length === 0) {
     return (
       <MainLayout>
         <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -91,12 +121,26 @@ const CheckoutPage = () => {
     );
   }
 
-  const handleShippingChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleShippingChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    if (name in shippingInfo) {
+    if (name === 'note') {
+      setNote(value);
+    } else if (name === 'city') {
+      setSelectedCity(value);
+      const city = vietnamLocations.find((c) => c.name === value);
+      setAvailableDistricts(city?.districts || []);
+      setAvailableWards([]);
+      setShippingInfo((prev) => ({ ...prev, city: value, district: '', ward: '' }));
+    } else if (name === 'district') {
+      setSelectedDistrict(value);
+      const city = vietnamLocations.find((c) => c.name === selectedCity);
+      const district = city?.districts.find((d) => d.name === value);
+      setAvailableWards(district?.wards || []);
+      setShippingInfo((prev) => ({ ...prev, district: value, ward: '' }));
+    } else if (name in shippingInfo) {
       setShippingInfo((prev) => ({ ...prev, [name]: value }));
-    } else {
-      setNotes(value);
     }
   };
 
@@ -109,18 +153,50 @@ const CheckoutPage = () => {
     setCardDetails((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePlaceOrder = (e: FormEvent<HTMLFormElement>) => {
+  const handlePlaceOrder = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsPlacingOrder(true);
 
-    setTimeout(() => {
-      dispatch(clearCart());
+    try {
+      const fullAddress = `${shippingInfo.address}, ${shippingInfo.ward}, ${shippingInfo.district}, ${shippingInfo.city}`;
+
+      const payload: CreateOrderPayload = {
+        paymentMethod,
+        receiverName: shippingInfo.fullName,
+        receiverPhone: shippingInfo.phone,
+        shippingAddress: fullAddress,
+        note: note || undefined,
+      };
+
+      const response = await createOrder(payload);
+
+      // Xóa giỏ hàng sau khi đặt hàng thành công
+      await dispatch(clearCart()).unwrap();
+
+      if (response.data.paymentUrl) {
+        toast({
+          title: 'Đặt hàng thành công',
+          description: response.data.message || 'Đang chuyển đến trang thanh toán...',
+        });
+        window.location.href = response.data.paymentUrl;
+      } else {
+        toast({
+          title: 'Đặt hàng thành công',
+          description: response.data.message || `Đơn hàng #${response.data.billCode} đã được tạo`,
+        });
+
+        navigate('/orders');
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Đặt hàng thất bại';
       toast({
-        title: 'Order placed successfully',
-        description: 'Thank you for shopping with UTEShop!',
+        variant: 'destructive',
+        title: 'Lỗi đặt hàng',
+        description: errorMessage,
       });
-      navigate('/orders');
-    }, 800);
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
 
   return (
@@ -136,7 +212,10 @@ const CheckoutPage = () => {
             >
               <div>
                 <p className="inline-flex items-center text-sm text-muted-foreground mb-2 gap-2">
-                  <Link to="/cart" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                  <Link
+                    to="/cart"
+                    className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                  >
                     <ArrowLeft className="w-4 h-4" />
                     Back to Cart
                   </Link>
@@ -166,58 +245,34 @@ const CheckoutPage = () => {
                   <Truck className="w-5 h-5 text-primary" />
                   <div>
                     <h2 className="text-lg font-semibold">Shipping Information</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Provide your delivery details
-                    </p>
+                    <p className="text-sm text-muted-foreground">Provide your delivery details</p>
                   </div>
                 </div>
                 <div className="p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name *</Label>
+                      <Label htmlFor="fullName">Họ và tên *</Label>
                       <Input
                         id="fullName"
                         name="fullName"
                         value={shippingInfo.fullName}
                         onChange={handleShippingChange}
                         required
-                        placeholder="John Doe"
+                        placeholder="Nguyễn Văn A"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={shippingInfo.email}
-                        onChange={handleShippingChange}
-                        required
-                        placeholder="john@example.com"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone *</Label>
+                      <Label htmlFor="phone">Số điện thoại *</Label>
                       <Input
                         id="phone"
                         name="phone"
+                        type="tel"
                         value={shippingInfo.phone}
                         onChange={handleShippingChange}
                         required
-                        placeholder="+1 555 555 5555"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="country">Country/Region *</Label>
-                      <Input
-                        id="country"
-                        name="country"
-                        value={shippingInfo.country}
-                        onChange={handleShippingChange}
-                        required
+                        placeholder="0912345678"
+                        pattern="[0-9]{10}"
+                        title="Vui lòng nhập số điện thoại 10 chữ số"
                       />
                     </div>
                   </div>
@@ -236,34 +291,60 @@ const CheckoutPage = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="city">City *</Label>
-                      <Input
+                      <Label htmlFor="city">City/Province *</Label>
+                      <select
                         id="city"
                         name="city"
                         value={shippingInfo.city}
                         onChange={handleShippingChange}
                         required
-                      />
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="">Chọn Tỉnh/Thành phố</option>
+                        {vietnamLocations.map((city) => (
+                          <option key={city.code} value={city.name}>
+                            {city.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="state">State/Province *</Label>
-                      <Input
-                        id="state"
-                        name="state"
-                        value={shippingInfo.state}
+                      <Label htmlFor="district">District *</Label>
+                      <select
+                        id="district"
+                        name="district"
+                        value={shippingInfo.district}
                         onChange={handleShippingChange}
                         required
-                      />
+                        disabled={!selectedCity}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">Chọn Quận/Huyện</option>
+                        {availableDistricts.map((district) => (
+                          <option key={district.code} value={district.name}>
+                            {district.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="postalCode">Postal Code *</Label>
-                      <Input
-                        id="postalCode"
-                        name="postalCode"
-                        value={shippingInfo.postalCode}
+                      <Label htmlFor="ward">Ward *</Label>
+                      <select
+                        id="ward"
+                        name="ward"
+                        value={shippingInfo.ward}
                         onChange={handleShippingChange}
                         required
-                      />
+                        disabled={!selectedDistrict}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">Chọn Phường/Xã</option>
+                        {availableWards.map((ward) => (
+                          <option key={ward.code} value={ward.name}>
+                            {ward.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -271,8 +352,8 @@ const CheckoutPage = () => {
                     <Label htmlFor="notes">Order Notes (Optional)</Label>
                     <textarea
                       id="notes"
-                      name="notes"
-                      value={notes}
+                      name="note"
+                      value={note}
                       onChange={handleShippingChange}
                       placeholder="Special delivery instructions, leave at the front desk, etc."
                       className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -291,39 +372,14 @@ const CheckoutPage = () => {
                   <CreditCard className="w-5 h-5 text-primary" />
                   <div>
                     <h2 className="text-lg font-semibold">Payment Method</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Choose how you want to pay
-                    </p>
+                    <p className="text-sm text-muted-foreground">Choose how you want to pay</p>
                   </div>
                 </div>
                 <div className="p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <label
                       className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        paymentMethod === 'card'
-                          ? 'border-primary shadow-sm bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">Credit / Debit Card</span>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="card"
-                          checked={paymentMethod === 'card'}
-                          onChange={handlePaymentChange}
-                          className="accent-primary"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Visa, Mastercard, American Express
-                      </p>
-                    </label>
-
-                    <label
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        paymentMethod === 'cod'
+                        paymentMethod === 'CASH'
                           ? 'border-primary shadow-sm bg-primary/5'
                           : 'border-border hover:border-primary/50'
                       }`}
@@ -333,8 +389,8 @@ const CheckoutPage = () => {
                         <input
                           type="radio"
                           name="paymentMethod"
-                          value="cod"
-                          checked={paymentMethod === 'cod'}
+                          value="CASH"
+                          checked={paymentMethod === 'CASH'}
                           onChange={handlePaymentChange}
                           className="accent-primary"
                         />
@@ -343,58 +399,30 @@ const CheckoutPage = () => {
                         Pay with cash when your order arrives
                       </p>
                     </label>
-                  </div>
 
-                  {paymentMethod === 'card' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="name">Name on Card *</Label>
-                        <Input
-                          id="name"
-                          name="name"
-                          value={cardDetails.name}
-                          onChange={handleCardChange}
-                          required
-                          placeholder="John Doe"
+                    <label
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        paymentMethod === 'BANKING'
+                          ? 'border-primary shadow-sm bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">Bank Transfer</span>
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="BANKING"
+                          checked={paymentMethod === 'BANKING'}
+                          onChange={handlePaymentChange}
+                          className="accent-primary"
                         />
                       </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="number">Card Number *</Label>
-                        <Input
-                          id="number"
-                          name="number"
-                          value={cardDetails.number}
-                          onChange={handleCardChange}
-                          required
-                          placeholder="1234 5678 9012 3456"
-                          inputMode="numeric"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="expiry">Expiry Date *</Label>
-                        <Input
-                          id="expiry"
-                          name="expiry"
-                          value={cardDetails.expiry}
-                          onChange={handleCardChange}
-                          required
-                          placeholder="MM/YY"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cvc">CVC *</Label>
-                        <Input
-                          id="cvc"
-                          name="cvc"
-                          value={cardDetails.cvc}
-                          onChange={handleCardChange}
-                          required
-                          placeholder="123"
-                          inputMode="numeric"
-                        />
-                      </div>
-                    </div>
-                  )}
+                      <p className="text-xs text-muted-foreground">
+                        Transfer directly to our bank account
+                      </p>
+                    </label>
+                  </div>
                 </div>
               </motion.div>
             </div>
@@ -417,17 +445,24 @@ const CheckoutPage = () => {
 
               <div className="space-y-4">
                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                  {items.map((item) => (
-                    <div key={item.id} className="flex justify-between gap-4">
-                      <div>
-                        <p className="font-medium text-sm">{item.product.name}</p>
+                  {checkoutData.items.map((item) => (
+                    <div key={item.productId} className="flex gap-4">
+                      {item.image && (
+                        <img
+                          src={item.image}
+                          alt={item.productName}
+                          className="w-16 h-16 rounded-md object-cover"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <p className="font-medium text-sm line-clamp-2">{item.productName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {item.size.value} • {item.color.name} • Qty {item.quantity}
+                          Qty {item.quantity} × {item.unitPrice.toLocaleString('vi-VN')}₫
+                        </p>
+                        <p className="text-sm font-semibold mt-1">
+                          {item.itemTotal.toLocaleString('vi-VN')}₫
                         </p>
                       </div>
-                      <span className="text-sm font-semibold">
-                        ${(item.product.price * item.quantity).toFixed(2)}
-                      </span>
                     </div>
                   ))}
                 </div>
@@ -435,23 +470,35 @@ const CheckoutPage = () => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Subtotal</span>
-                    <span className="font-medium">${subtotal.toFixed(2)}</span>
+                    <span className="font-medium">
+                      {checkoutData.subtotal.toLocaleString('vi-VN')}₫
+                    </span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Shipping</span>
                     <span className="font-medium">
-                      {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
+                      {checkoutData.shipping === 0
+                        ? 'FREE'
+                        : `${checkoutData.shipping.toLocaleString('vi-VN')}₫`}
                     </span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Tax</span>
-                    <span className="font-medium">${tax.toFixed(2)}</span>
+                    <span>Tax (10%)</span>
+                    <span className="font-medium">{checkoutData.tax.toLocaleString('vi-VN')}₫</span>
                   </div>
+                  {checkoutData.discount > 0 && (
+                    <div className="flex justify-between text-destructive">
+                      <span>Discount</span>
+                      <span className="font-medium">
+                        -{checkoutData.discount.toLocaleString('vi-VN')}₫
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t border-border pt-3 flex justify-between text-lg">
                   <span className="font-bold">Total</span>
-                  <span className="font-bold">${total.toFixed(2)}</span>
+                  <span className="font-bold">{checkoutData.total.toLocaleString('vi-VN')}₫</span>
                 </div>
 
                 <div className="bg-accent/30 text-accent-foreground rounded-lg p-3 text-xs flex gap-2 items-start">
@@ -460,12 +507,7 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={isPlacingOrder}
-              >
+              <Button type="submit" className="w-full" size="lg" disabled={isPlacingOrder}>
                 {isPlacingOrder ? 'Processing...' : 'Place Order'}
               </Button>
 
@@ -483,5 +525,3 @@ const CheckoutPage = () => {
 };
 
 export default CheckoutPage;
-
-
