@@ -3,48 +3,55 @@
  * Display user's wishlist items
  */
 
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Heart, Trash2, ShoppingCart } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import {
-  selectWishlistItems,
-  removeFromWishlist,
-  clearWishlist,
-} from '@/redux/slices/wishlist.slice';
-import { addToCart } from '@/redux/slices/cart.slice';
 import { Button } from '@/components';
-import { useToast } from '@/hooks';
 import { MainLayout } from '@/layouts';
-import { ProductColor, ProductSize } from '@/types/product';
-import { Product } from '@/types/order';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { addToCart } from '@/redux/slices/cart.slice';
+import {
+  clearWishlist,
+  fetchFavourites,
+  removeFromWishlistAsync,
+  selectWishlistItems,
+  selectWishlistLoading,
+} from '@/redux/slices/wishlist.slice';
+import { motion } from 'framer-motion';
+import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 
 const WishlistPage = () => {
   const dispatch = useAppDispatch();
-  const { toast } = useToast();
   const items = useAppSelector(selectWishlistItems);
+  const loading = useAppSelector(selectWishlistLoading);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 12;
 
-  const handleRemove = (id: string) => {
-    dispatch(removeFromWishlist(id));
-    toast({
-      title: 'Removed from wishlist',
-      description: 'Item has been removed from your wishlist',
-    });
+  useEffect(() => {
+    dispatch(fetchFavourites({ page: currentPage, limit }))
+      .unwrap()
+      .then((response) => {
+        if (response.totalPages) {
+          setTotalPages(response.totalPages);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to fetch favourites:', error);
+      });
+  }, [dispatch, currentPage]);
+
+  const handleRemove = async (id: number) => {
+    try {
+      await dispatch(removeFromWishlistAsync(id)).unwrap();
+      toast.success('Đã xóa khỏi danh sách yêu thích');
+    } catch (error) {
+      toast.error('Không thể xóa sản phẩm');
+    }
   };
 
-  const handleAddToCart = (product: Product) => {
-    const defaultSize = product.sizes.find((s: ProductSize) => s.available) || product.sizes[0];
-    const defaultColor = product.colors.find((c: ProductColor) => c.available) || product.colors[0];
-
-    if (!defaultSize || !defaultColor) {
-      toast({
-        variant: 'destructive',
-        title: 'Cannot add to cart',
-        description: 'This product is currently unavailable',
-      });
-      return;
-    }
-
+  const handleAddToCart = (product: any) => {
+    // Simple add to cart - backend will handle defaults
     dispatch(
       addToCart({
         productId: product.id,
@@ -52,18 +59,12 @@ const WishlistPage = () => {
       })
     );
 
-    toast({
-      title: 'Added to cart',
-      description: `${product.name} has been added to your cart`,
-    });
+    toast.success(`${product.productName} đã được thêm vào giỏ hàng`);
   };
 
   const handleClearAll = () => {
     dispatch(clearWishlist());
-    toast({
-      title: 'Wishlist cleared',
-      description: 'All items have been removed from your wishlist',
-    });
+    toast.success('Đã xóa tất cả sản phẩm yêu thích');
   };
 
   return (
@@ -78,14 +79,14 @@ const WishlistPage = () => {
               className="flex items-center justify-between"
             >
               <div>
-                <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">My Wishlist</h1>
+                <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">Danh sách yêu thích</h1>
                 <p className="text-muted-foreground">
-                  {items.length} {items.length === 1 ? 'item' : 'items'} saved
+                  {items.length} sản phẩm
                 </p>
               </div>
               {items.length > 0 && (
                 <Button variant="outline" onClick={handleClearAll}>
-                  Clear All
+                  Xóa tất cả
                 </Button>
               )}
             </motion.div>
@@ -93,7 +94,20 @@ const WishlistPage = () => {
         </section>
 
         <div className="container-custom py-12">
-          {items.length === 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-card rounded-lg overflow-hidden border border-border">
+                  <div className="aspect-[3/4] bg-muted animate-pulse" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-muted rounded animate-pulse" />
+                    <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                    <div className="h-6 bg-muted rounded w-1/2 animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : items.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -126,13 +140,13 @@ const WishlistPage = () => {
                     className="block relative aspect-[3/4] overflow-hidden bg-muted"
                   >
                     <img
-                      src={product.images[0]}
-                      alt={product.name}
+                      src={product.images?.[0]?.url || 'https://placehold.co/600x800/eeeeee/333333?text=No+Image'}
+                      alt={product.productName}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    {product.discount && (
+                    {product.discountCampaign?.percentage && (
                       <span className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-medium px-2 py-1 rounded">
-                        -{product.discount}%
+                        -{product.discountCampaign.percentage}%
                       </span>
                     )}
                     <button
@@ -150,10 +164,10 @@ const WishlistPage = () => {
                   <div className="p-4">
                     <Link to={`/products/${product.slug}`}>
                       <p className="text-sm text-muted-foreground mb-1">
-                        {product.category.name}
+                        {product.category?.categoryName || 'Unknown'}
                       </p>
                       <h3 className="font-medium text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                        {product.name}
+                        {product.productName}
                       </h3>
                     </Link>
 
@@ -163,7 +177,7 @@ const WishlistPage = () => {
                         {[...Array(5)].map((_, i) => (
                           <svg
                             key={i}
-                            className={`w-4 h-4 ${i < Math.floor(product.rating)
+                            className={`w-4 h-4 ${i < Math.floor(product.ratingAvg || 0)
                               ? 'text-yellow-400 fill-current'
                               : 'text-gray-300'
                               }`}
@@ -181,18 +195,18 @@ const WishlistPage = () => {
                         ))}
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        ({product.reviewCount})
+                        ({product.reviewCount || 0})
                       </span>
                     </div>
 
                     {/* Price */}
                     <div className="flex items-center gap-2 mb-4">
                       <span className="text-lg font-bold text-foreground">
-                        ${product.price.toFixed(2)}
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.unitPrice * (1 - (product.discountCampaign?.percentage || 0) / 100))}
                       </span>
-                      {product.originalPrice && (
+                      {product.discountCampaign?.percentage && (
                         <span className="text-sm text-muted-foreground line-through">
-                          ${product.originalPrice.toFixed(2)}
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.unitPrice)}
                         </span>
                       )}
                     </div>
@@ -202,14 +216,48 @@ const WishlistPage = () => {
                       onClick={() => handleAddToCart(product)}
                       className="w-full"
                       size="sm"
-                      disabled={product.stock === 0}
+                      disabled={product.productStatus === 'OUT_OF_STOCK'}
                     >
                       <ShoppingCart className="w-4 h-4 mr-2" />
-                      {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                      {product.productStatus === 'OUT_OF_STOCK' ? 'Hết hàng' : 'Thêm vào giỏ'}
                     </Button>
                   </div>
                 </motion.div>
               ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && items.length > 0 && totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-8">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Trang trước
+              </Button>
+
+              <div className="flex items-center gap-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? 'default' : 'outline'}
+                    onClick={() => setCurrentPage(page)}
+                    className="w-10 h-10 p-0"
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Trang sau
+              </Button>
             </div>
           )}
         </div>

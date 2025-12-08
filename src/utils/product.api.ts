@@ -56,3 +56,22 @@ export const getProductDetail = async (slug: string) => {
   const response = await apiClient.get(`/ute-shop/api/client/home/products/${slug}`);
   return response.data.data;
 };
+
+export const getSimilarProducts = async (productId: number, limit: number = 6) => {
+  const response = await apiClient.get(`/ute-shop/api/client/home/products/${productId}/similar`, {
+    params: { limit },
+  });
+  return response.data.data;
+};
+
+export const trackProductView = async (productId: number) => {
+  const response = await apiClient.post(`/ute-shop/api/client/home/products/${productId}/view`);
+  return response.data.data;
+};
+
+export const getRecentlyViewed = async (limit: number = 10) => {
+  const response = await apiClient.get('/ute-shop/api/client/home/recently-viewed', {
+    params: { limit },
+  });
+  return response.data.data;
+};

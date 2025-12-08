@@ -13,3 +13,4 @@ export * from './Loading';
 export * from './ReviewForm';
 export * from './ReviewCard';
 export * from './VoucherCard';
+export * from './SimilarProducts';
