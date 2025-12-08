@@ -23,6 +23,12 @@ interface CommentListProps {
   onEditComment: (id: number, description: string) => Promise<void>;
   onDeleteComment: (id: number) => Promise<void>;
   productId: number;
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+  } | null;
+  onLoadMore?: () => Promise<void>;
 }
 
 export const CommentList = ({
@@ -31,12 +37,19 @@ export const CommentList = ({
   onSubmitComment,
   onEditComment,
   onDeleteComment,
+  pagination,
+  onLoadMore,
 }: CommentListProps) => {
   const { isAuthenticated } = useAuth();
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [editingComment, setEditingComment] = useState<Comment | null>(null);
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const hasMore = pagination
+    ? comments.length < pagination.total
+    : false;
 
   const handleSubmitComment = async (description: string, parentId?: number) => {
     setIsSubmitting(true);
@@ -67,6 +80,16 @@ export const CommentList = ({
     if (deletingCommentId) {
       await onDeleteComment(deletingCommentId);
       setDeletingCommentId(null);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (!onLoadMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      await onLoadMore();
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -130,37 +153,59 @@ export const CommentList = ({
           <p className="text-muted-foreground">Chưa có bình luận nào</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {comments.map((comment) => (
-            <div key={comment.id}>
-              {replyingTo === comment.id ? (
-                <div className="ml-8 mb-4 bg-muted/30 border border-border rounded-lg p-4">
-                  <div className="mb-2 text-sm text-muted-foreground">
-                    Trả lời {comment.customer.fullName}
+        <>
+          <div className="space-y-4">
+            {comments.map((comment) => (
+              <div key={comment.id}>
+                {replyingTo === comment.id ? (
+                  <div className="ml-8 mb-4 bg-muted/30 border border-border rounded-lg p-4">
+                    <div className="mb-2 text-sm text-muted-foreground">
+                      Trả lời {comment.customer.fullName}
+                    </div>
+                    <CommentForm
+                      onSubmit={(description) => handleSubmitComment(description, comment.id)}
+                      onCancel={() => setReplyingTo(null)}
+                      isSubmitting={isSubmitting}
+                      isReply
+                      placeholder="Viết phản hồi..."
+                    />
                   </div>
-                  <CommentForm
-                    onSubmit={(description) => handleSubmitComment(description, comment.id)}
-                    onCancel={() => setReplyingTo(null)}
-                    isSubmitting={isSubmitting}
-                    isReply
-                    placeholder="Viết phản hồi..."
-                  />
-                </div>
-              ) : null}
-              <CommentCard
-                comment={comment}
-                isEditing={editingComment?.id === comment.id}
-                onReply={(parentId) => {
-                  if (isAuthenticated) {
-                    setReplyingTo(parentId);
-                  }
-                }}
-                onEdit={(comment) => setEditingComment(comment)}
-                onDelete={handleDeleteComment}
-              />
+                ) : null}
+                <CommentCard
+                  comment={comment}
+                  isEditing={editingComment?.id === comment.id}
+                  onReply={(parentId) => {
+                    if (isAuthenticated) {
+                      setReplyingTo(parentId);
+                    }
+                  }}
+                  onEdit={(comment) => setEditingComment(comment)}
+                  onDelete={handleDeleteComment}
+                />
+              </div>
+            ))}
+          </div>
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <Button
+                variant="outline"
+                onClick={handleLoadMore}
+                disabled={isLoadingMore}
+                className="min-w-[120px]"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang tải...
+                  </>
+                ) : (
+                  `Xem thêm (${pagination ? pagination.total - comments.length : 0} bình luận)`
+                )}
+              </Button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
         </>
       )}
