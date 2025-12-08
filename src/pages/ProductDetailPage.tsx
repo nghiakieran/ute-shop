@@ -18,7 +18,7 @@ import 'swiper/css/zoom';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { addToCart } from '@/redux/slices/cart.slice';
 import { fetchProductReviews, selectReviews, selectReviewStats } from '@/redux/slices/review.slice';
-import { Button, Loading, ReviewCard } from '@/components';
+import { Button, Loading, ReviewCard, SimilarProducts } from '@/components';
 import { useAuth } from '@/hooks';
 import { MainLayout } from '@/layouts';
 import { getProductDetail } from '@/utils/product.api';
@@ -336,11 +336,10 @@ const ProductDetailPage = () => {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-5 h-5 ${
-                          i < Math.floor(product.ratingAvg || 0)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        }`}
+                        className={`w-5 h-5 ${i < Math.floor(product.ratingAvg || 0)
+                          ? 'text-yellow-400 fill-current'
+                          : 'text-gray-300'
+                          }`}
                       />
                     ))}
                   </div>
@@ -365,9 +364,8 @@ const ProductDetailPage = () => {
               {/* Stock Status */}
               <div className="flex items-center gap-4">
                 <span
-                  className={`text-sm font-medium ${
-                    !isOutOfStock ? 'text-green-600' : 'text-red-600'
-                  }`}
+                  className={`text-sm font-medium ${!isOutOfStock ? 'text-green-600' : 'text-red-600'
+                    }`}
                 >
                   {!isOutOfStock ? `In Stock (${product.quantityStock} available)` : 'Out of Stock'}
                 </span>
@@ -468,11 +466,10 @@ const ProductDetailPage = () => {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`w-5 h-5 ${
-                              star <= Math.round(reviewStats.averageRating)
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
+                            className={`w-5 h-5 ${star <= Math.round(reviewStats.averageRating)
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-gray-300'
+                              }`}
                           />
                         ))}
                       </div>
@@ -488,20 +485,19 @@ const ProductDetailPage = () => {
                             <div
                               className="bg-yellow-400 h-2 rounded-full"
                               style={{
-                                width: `${
-                                  (reviewStats.ratingDistribution[
-                                    rating as keyof typeof reviewStats.ratingDistribution
-                                  ] /
-                                    reviewStats.totalReviews) *
+                                width: `${(reviewStats.ratingDistribution[
+                                  rating as keyof typeof reviewStats.ratingDistribution
+                                ] /
+                                  reviewStats.totalReviews) *
                                   100
-                                }%`,
+                                  }%`,
                               }}
                             />
                           </div>
                           <span className="text-sm text-muted-foreground w-12">
                             {
                               reviewStats.ratingDistribution[
-                                rating as keyof typeof reviewStats.ratingDistribution
+                              rating as keyof typeof reviewStats.ratingDistribution
                               ]
                             }
                           </span>
@@ -529,6 +525,13 @@ const ProductDetailPage = () => {
               )}
             </div>
           </div>
+
+          {/* Similar Products Section */}
+          {product?.id && (
+            <div className="container-custom py-12">
+              <SimilarProducts productId={product.id} limit={6} />
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>

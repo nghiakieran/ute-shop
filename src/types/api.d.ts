@@ -1,4 +1,5 @@
 type ApiResponse<T = any> = {
+  isFavourite: any;
   success: boolean;
   data: T;
   message?: string;
@@ -26,4 +27,3 @@ type ApiRequestConfig = {
   params?: Record<string, any>;
   headers?: Record<string, string>;
 };
-

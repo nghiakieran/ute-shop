@@ -24,6 +24,7 @@ import cartReducer from './slices/cart.slice';
 import orderReducer from './slices/order.slice';
 import wishlistReducer from './slices/wishlist.slice';
 import reviewReducer from './slices/review.slice';
+import recentlyViewedReducer from './slices/recently-viewed.slice';
 import { adminProductReducer } from './slices/admin/productManage.slice';
 import { adminBrandsCategorieseducer } from './slices/admin/brandCategoryManage.slice';
 
@@ -32,7 +33,7 @@ const persistConfig = {
   key: 'uteshop-root',
   version: 1,
   storage,
-  whitelist: ['auth', 'cart', 'wishlist'],
+  whitelist: ['auth', 'cart', 'wishlist', 'recentlyViewed'],
 };
 
 // Combine reducers
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
   order: orderReducer,
   wishlist: wishlistReducer,
   review: reviewReducer,
+  recentlyViewed: recentlyViewedReducer,
   productManage: adminProductReducer,
   brandsCategoriesManage: adminBrandsCategorieseducer,
 });

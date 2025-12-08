@@ -3,7 +3,6 @@
  */
 
 import { STORAGE_KEYS } from '@/constants';
-import { User } from '@/types';
 
 class StorageUtils {
   // Generic storage methods
@@ -82,4 +81,3 @@ class StorageUtils {
 }
 
 export const storageUtils = new StorageUtils();
-

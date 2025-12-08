@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { Button } from './Button';
+import { useFavourite } from '@/hooks/useFavourite';
+import { cn } from '@/lib/utils';
 
 // Giả sử kiểu 'Product' của bạn trông giống như JSON bạn đã gửi
 // (Bạn nên định nghĩa kiểu này ở một file .types.ts riêng)
@@ -14,6 +16,7 @@ interface ProductApi {
   originalPrice: number;
   unitPrice: number;
   productStatus: 'ACTIVE' | 'OUT_OF_STOCK';
+  productSold?: number;
   brand?: { brandName: string };
   discountCampaign?: { percentage: number };
   category?: { categoryName: string };
@@ -34,7 +37,8 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
-export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCardProps) => {
+export const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
+  const { isFavourite, toggleFavourite } = useFavourite(product.id);
   const discountPercentage = product.discountCampaign?.percentage || 0;
   const hasDiscount = discountPercentage > 0;
   const imageUrl =
@@ -78,11 +82,17 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
         <button
           onClick={(e) => {
             e.preventDefault();
-            onAddToWishlist?.(product);
+            e.stopPropagation();
+            toggleFavourite();
           }}
-          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center transition-opacity hover:bg-background"
         >
-          <Heart className="w-4 h-4" />
+          <Heart
+            className={cn(
+              'w-4 h-4 transition-colors',
+              isFavourite ? 'fill-red-500 stroke-red-500' : 'stroke-current'
+            )}
+          />
         </button>
 
         <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -111,17 +121,17 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
           </h3>
         </Link>
 
-        {/* Rating */}
-        <div className="flex items-center gap-2 mb-2">
+        {/* Rating & Sold Count */}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          {/* Rating */}
           <div className="flex items-center">
             {[...Array(5)].map((_, i) => (
               <svg
                 key={i}
-                className={`w-4 h-4 ${
-                  i < Math.floor(product.ratingAvg)
-                    ? 'text-yellow-400 fill-current'
-                    : 'text-gray-300'
-                }`}
+                className={`w-4 h-4 ${i < Math.floor(product.ratingAvg)
+                  ? 'text-yellow-400 fill-current'
+                  : 'text-gray-300'
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -135,6 +145,13 @@ export const ProductCard = ({ product, onAddToCart, onAddToWishlist }: ProductCa
               </svg>
             ))}
           </div>
+
+          {/* Sold Count */}
+          {product.productSold !== undefined && (
+            <span className="text-xs text-muted-foreground">
+              Đã bán {product.productSold}
+            </span>
+          )}
         </div>
 
         {/* Price */}
