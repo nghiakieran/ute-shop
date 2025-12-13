@@ -103,6 +103,11 @@ export const wishlistSlice = createAppSlice({
           state.favouriteIds = state.favouriteIds.filter((id) => id !== action.payload.productId);
           state.items = state.items.filter((item) => item.id !== action.payload.productId);
         }
+      })
+      .addDefaultCase((state) => {
+        if (!Array.isArray(state.favouriteIds)) {
+          state.favouriteIds = [];
+        }
       });
   },
 });
@@ -117,7 +122,7 @@ export const selectWishlistItemCount = (state: { wishlist: WishlistSliceState })
   state.wishlist.items.length;
 export const selectIsInWishlist =
   (productId: number) => (state: { wishlist: WishlistSliceState }) =>
-    state.wishlist.favouriteIds.includes(productId);
+    state.wishlist?.favouriteIds?.includes(productId) ?? false;
 export const selectWishlistLoading = (state: { wishlist: WishlistSliceState }) =>
   state.wishlist.loading;
 
