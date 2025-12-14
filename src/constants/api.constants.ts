@@ -45,4 +45,12 @@ export const API_ENDPOINTS = {
   GET_PRODUCT_REVIEWS: '/ute-shop/api/client/reviews/products/:productId',
   GET_MY_VOUCHERS: '/ute-shop/api/client/reviews/my-vouchers',
   GET_MY_POINTS: '/ute-shop/api/client/reviews/my-points',
+
+  // Comments
+  CREATE_COMMENT: '/ute-shop/api/client/comments',
+  GET_PRODUCT_COMMENTS: '/ute-shop/api/client/comments/products/:productId',
+  GET_COMMENT: '/ute-shop/api/client/comments/:id',
+  UPDATE_COMMENT: '/ute-shop/api/client/comments/:id',
+  DELETE_COMMENT: '/ute-shop/api/client/comments/:id',
+  GET_MY_COMMENTS: '/ute-shop/api/client/comments/user/my-comments',
 } as const;
