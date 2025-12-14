@@ -9,26 +9,22 @@ import {
   Users,
   CheckSquare,
   Bell,
-  Image as ImageIcon,
-  X,
   Smartphone,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { cn } from '@/lib/utils'; // Đảm bảo bạn có util này hoặc xóa đi dùng string thường
 import {
   notificationAPI,
   UserBasic,
   CreateNotificationEventPayload,
 } from '../../utils/notification.api';
 
-// Định nghĩa lại interface cho State form để đồng bộ UI và Logic
 interface EventFormData {
   title: string;
   description: string;
-  type: 'EVENT' | 'PROMOTION' | 'NEWS' | 'SYSTEM'; // Mở rộng type cho UI
+  type: 'ORDER' | 'POST' | 'EVENT' | 'REVIEW' | 'COMMENT' | 'PROMOTION' | 'SYSTEM';
   url: string;
   scheduledAt: string;
-  imagePreview: string | null; // UI only (nếu API chưa hỗ trợ thì chỉ để hiển thị)
+  imagePreview: string | null;
 }
 
 export const CreateEventForm = () => {
@@ -66,18 +62,15 @@ export const CreateEventForm = () => {
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
-  // Handle thay đổi input text/textarea
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Handle upload ảnh (Preview)
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
       setFormData((prev) => ({ ...prev, imagePreview: imageUrl }));
-      // Lưu ý: Nếu API cần file, bạn cần thêm state `file` để gửi lên server
     }
   };
 
@@ -109,7 +102,7 @@ export const CreateEventForm = () => {
       const payload: CreateNotificationEventPayload = {
         title: formData.title,
         description: formData.description,
-        type: formData.type === 'EVENT' ? 'EVENT' : 'EVENT', // Map lại nếu API chỉ nhận 'EVENT'
+        type: formData.type === 'EVENT' ? 'EVENT' : formData.type,
         url: formData.url,
         sendToAll,
         recipientIds: sendToAll ? [] : selectedUserIds,
@@ -255,7 +248,7 @@ export const CreateEventForm = () => {
               {[
                 { id: 'EVENT', label: 'Sự kiện' },
                 { id: 'PROMOTION', label: 'Khuyến mãi' },
-                { id: 'NEWS', label: 'Tin tức' },
+                { id: 'POST', label: 'Tin tức' },
                 { id: 'SYSTEM', label: 'Hệ thống' },
               ].map((type) => (
                 <div
@@ -311,7 +304,7 @@ export const CreateEventForm = () => {
             </div>
 
             {/* 4. UPLOAD ẢNH (UI Only) */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Hình ảnh (Tùy chọn)
               </label>
@@ -342,7 +335,7 @@ export const CreateEventForm = () => {
                   />
                 </label>
               )}
-            </div>
+            </div> */}
 
             {/* 5. CÀI ĐẶT NÂNG CAO */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-100">

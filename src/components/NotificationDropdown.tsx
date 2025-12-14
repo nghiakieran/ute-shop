@@ -35,15 +35,15 @@ import { API_BASE_URL } from '@/constants/api.constants';
 
 const getNotificationIcon = (type: NotificationType) => {
   switch (type) {
-    case 'order':
+    case 'ORDER':
       return <ShoppingBag className="w-5 h-5" />;
-    case 'post':
+    case 'POST':
       return <FileText className="w-5 h-5" />;
-    case 'event':
+    case 'EVENT':
       return <Calendar className="w-5 h-5" />;
-    case 'review':
+    case 'REVIEW':
       return <Star className="w-5 h-5" />;
-    case 'comment':
+    case 'COMMENT':
       return <MessageSquare className="w-5 h-5" />;
     default:
       return <Bell className="w-5 h-5" />;
@@ -52,15 +52,15 @@ const getNotificationIcon = (type: NotificationType) => {
 
 const getNotificationColor = (type: NotificationType) => {
   switch (type) {
-    case 'order':
+    case 'ORDER':
       return 'bg-blue-100 text-blue-600';
-    case 'post':
+    case 'POST':
       return 'bg-green-100 text-green-600';
-    case 'event':
+    case 'EVENT':
       return 'bg-purple-100 text-purple-600';
-    case 'review':
+    case 'REVIEW':
       return 'bg-yellow-100 text-yellow-600';
-    case 'comment':
+    case 'COMMENT':
       return 'bg-pink-100 text-pink-600';
     default:
       return 'bg-gray-100 text-gray-600';
@@ -136,7 +136,7 @@ const NotificationItem = ({ notification, onMarkAsRead, onRemove }: Notification
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex items-center space-x-1"
+              className="flex items-center space-x-1 relative z-20"
             >
               {!notification.read && (
                 <button
@@ -254,7 +254,7 @@ export const NotificationDropdown = () => {
     const handleNotification = (payload: any) => {
       const notif: Notification = {
         id: String(payload.id ?? Date.now()),
-        type: (payload.type as NotificationType) ?? 'post',
+        type: (payload.type as NotificationType) ?? 'POST',
         title: payload.title ?? 'Thông báo mới',
         message: payload.description ?? payload.message ?? '',
         read: !!(payload.read || payload.isRead),

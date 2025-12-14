@@ -2,7 +2,14 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../createAppSlice';
 import { notificationAPI } from '@/utils/notification.api';
 
-export type NotificationType = 'order' | 'post' | 'event' | 'review' | 'comment';
+export type NotificationType =
+  | 'ORDER'
+  | 'POST'
+  | 'EVENT'
+  | 'REVIEW'
+  | 'COMMENT'
+  | 'PROMOTION'
+  | 'SYSTEM';
 
 export interface Notification {
   id: string;

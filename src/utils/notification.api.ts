@@ -7,7 +7,7 @@ export interface CreateNotificationEventPayload {
   sendToAll?: boolean;
   title: string;
   description: string;
-  type?: 'EVENT' | 'ORDER' | 'POST' | 'SYSTEM';
+  type?: 'ORDER' | 'POST' | 'EVENT' | 'REVIEW' | 'COMMENT' | 'PROMOTION' | 'SYSTEM';
   url?: string;
   scheduledAt?: string;
 }
@@ -33,7 +33,7 @@ export const notificationAPI = {
   },
 
   removeNotification: async (id: string | number) => {
-    return apiClient.delete(`/notifications/${id}`);
+    return apiClient.delete(`/ute-shop/api/client/notifications/${id}`);
   },
 
   clearAllNotifications: async () => {
