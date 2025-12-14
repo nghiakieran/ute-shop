@@ -17,6 +17,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import {
   selectNotifications,
   selectUnreadCount,
+  selectUnreadNotifications,
   markAsRead,
   markAllAsRead,
   removeNotification,
@@ -173,12 +174,20 @@ const NotificationItem = ({ notification, onMarkAsRead, onRemove }: Notification
   );
 };
 
+type TabType = 'all' | 'unread';
+
 export const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('all');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
-  const notifications = useAppSelector(selectNotifications);
+  const allNotifications = useAppSelector(selectNotifications);
+  const unreadNotifications = useAppSelector(selectUnreadNotifications);
   const unreadCount = useAppSelector(selectUnreadCount);
+
+  // Lọc thông báo theo tab
+  const displayedNotifications =
+    activeTab === 'all' ? allNotifications : unreadNotifications;
 
   // Đóng dropdown khi click bên ngoài
   useEffect(() => {
@@ -271,8 +280,49 @@ export const NotificationDropdown = () => {
                 </button>
               </div>
 
+              {/* Tabs */}
+              <div className="flex border-b border-border">
+                <button
+                  onClick={() => setActiveTab('all')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
+                    activeTab === 'all'
+                      ? 'text-primary'
+                      : 'text-foreground/70 hover:text-foreground'
+                  }`}
+                >
+                  Tất cả
+                  {activeTab === 'all' && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                    />
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab('unread')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
+                    activeTab === 'unread'
+                      ? 'text-primary'
+                      : 'text-foreground/70 hover:text-foreground'
+                  }`}
+                >
+                  Chưa đọc
+                  {unreadCount > 0 && activeTab !== 'unread' && (
+                    <span className="ml-2 bg-primary text-primary-foreground text-xs font-medium px-1.5 py-0.5 rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                  {activeTab === 'unread' && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                    />
+                  )}
+                </button>
+              </div>
+
               {/* Actions */}
-              {notifications.length > 0 && (
+              {displayedNotifications.length > 0 && (
                 <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-accent/30">
                   <button
                     onClick={handleMarkAllAsRead}
@@ -293,14 +343,16 @@ export const NotificationDropdown = () => {
 
               {/* Notifications List */}
               <div className="overflow-y-auto flex-1">
-                {notifications.length === 0 ? (
+                {displayedNotifications.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 px-4">
                     <Bell className="w-12 h-12 text-foreground/30 mb-4" />
-                    <p className="text-sm text-foreground/70">Không có thông báo nào</p>
+                    <p className="text-sm text-foreground/70">
+                      {activeTab === 'unread' ? 'Không có thông báo chưa đọc' : 'Không có thông báo nào'}
+                    </p>
                   </div>
                 ) : (
                   <AnimatePresence>
-                    {notifications.map((notification) => (
+                    {displayedNotifications.map((notification) => (
                       <NotificationItem
                         key={notification.id}
                         notification={notification}
@@ -311,19 +363,6 @@ export const NotificationDropdown = () => {
                   </AnimatePresence>
                 )}
               </div>
-
-              {/* Footer */}
-              {notifications.length > 0 && (
-                <div className="p-4 border-t border-border bg-accent/30">
-                  <Link
-                    to="/notifications"
-                    onClick={() => setIsOpen(false)}
-                    className="block text-center text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-                  >
-                    Xem tất cả thông báo
-                  </Link>
-                </div>
-              )}
             </motion.div>
           </>
         )}

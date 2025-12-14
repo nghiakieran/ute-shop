@@ -100,11 +100,8 @@ const mockNotifications: Notification[] = [
 ];
 
 const initialState: NotificationSliceState = {
-  notifications: allMockNotifications.slice(0, ITEMS_PER_PAGE), // Load 10 đầu tiên
-  unreadCount: allMockNotifications.filter((n) => !n.read).length,
-  hasMore: allMockNotifications.length > ITEMS_PER_PAGE,
-  page: 1,
-  loading: false,
+  notifications: mockNotifications,
+  unreadCount: mockNotifications.filter((n) => !n.read).length,
 };
 
 // ==================== SLICE ====================
