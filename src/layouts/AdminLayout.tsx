@@ -1,14 +1,15 @@
 import { AdminSidebar } from '@/components/AdminSidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Outlet } from 'react-router-dom';
+
 export const AdminLayout = () => {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="admin-theme min-h-screen flex w-full">
-        <AdminSidebar />
-        <main className="flex-1 overflow-auto">
+        <AdminSidebar collapsible />
+        <SidebarInset>
           <Outlet />
-        </main>
+        </SidebarInset>
       </div>
     </SidebarProvider>
   );

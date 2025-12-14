@@ -5,6 +5,8 @@
 
 import { ReactNode } from 'react';
 import { Navbar, Footer } from '@/components';
+import { FloatingChatbox } from '@/components/FloatingChatbox';
+
 interface MainLayoutProps {
   children: ReactNode;
 }
@@ -17,6 +19,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <main className="flex-1 pt-20">{children}</main>
 
       <Footer />
+
+      <FloatingChatbox />
     </div>
   );
 };
