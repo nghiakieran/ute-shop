@@ -34,6 +34,7 @@ import { UserLayout } from '@/layouts/UserLayout';
 import ProductDetail from '@/pages/admin/ProductDetail';
 import OrderDetail from '@/pages/admin/OrderDetail';
 import CreatePromotion from '@/pages/admin/CreatePromotion';
+import { CreateEventForm } from '@/pages/admin/CreateEvent';
 
 export const AppRoutes = () => {
   return (
@@ -125,6 +126,7 @@ export const AppRoutes = () => {
         <Route path="promotions/edit/:id" element={<CreatePromotion />} />
         <Route path="brands-categories" element={<BrandsCategories />} />
         <Route path="messages" element={<Messages />} />
+        <Route path="events" element={<CreateEventForm />} />
       </Route>
       {/* 404 - Redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />

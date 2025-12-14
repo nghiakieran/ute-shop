@@ -28,6 +28,10 @@ import {
   Notification,
   NotificationType,
 } from '@/redux/slices/notification.slice';
+import { addNotification } from '@/redux/slices/notification.slice';
+import { io } from 'socket.io-client';
+import { useAuth } from '@/hooks';
+import { API_BASE_URL } from '@/constants/api.constants';
 
 const getNotificationIcon = (type: NotificationType) => {
   switch (type) {
@@ -110,10 +114,10 @@ const NotificationItem = ({ notification, onMarkAsRead, onRemove }: Notification
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground">{notification.title}</p>
-              <p className="text-sm text-foreground/70 mt-1 line-clamp-2">
-                {notification.message}
+              <p className="text-sm text-foreground/70 mt-1 line-clamp-2">{notification.message}</p>
+              <p className="text-xs text-foreground/50 mt-2">
+                {formatTimeAgo(notification.createdAt)}
               </p>
-              <p className="text-xs text-foreground/50 mt-2">{formatTimeAgo(notification.createdAt)}</p>
             </div>
 
             {/* Unread indicator */}
@@ -185,17 +189,15 @@ export const NotificationDropdown = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
+  const { user } = useAuth();
   const allNotifications = useAppSelector(selectNotifications);
   const unreadNotifications = useAppSelector(selectUnreadNotifications);
   const unreadCount = useAppSelector(selectUnreadCount);
   const hasMore = useAppSelector(selectHasMore);
   const loading = useAppSelector(selectNotificationLoading);
 
-  // Lọc thông báo theo tab
-  const displayedNotifications =
-    activeTab === 'all' ? allNotifications : unreadNotifications;
+  const displayedNotifications = activeTab === 'all' ? allNotifications : unreadNotifications;
 
-  // Đóng dropdown khi click bên ngoài
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -211,19 +213,22 @@ export const NotificationDropdown = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(loadMoreNotifications());
+    }
+  }, [dispatch, user?.id]);
 
-  // Infinite scroll - load more khi scroll gần cuối
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer || !isOpen) return;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-      // Load more khi còn cách cuối 100px (chỉ load khi ở tab "all" hoặc khi tab "unread" còn ít items)
       const shouldLoadMore =
         activeTab === 'all'
           ? hasMore && !loading
-          : displayedNotifications.length < 5 && hasMore && !loading; // Tab unread: load more nếu còn ít items
+          : displayedNotifications.length < 5 && hasMore && !loading;
 
       if (scrollHeight - scrollTop - clientHeight < 100 && shouldLoadMore) {
         dispatch(loadMoreNotifications());
@@ -235,6 +240,46 @@ export const NotificationDropdown = () => {
       scrollContainer.removeEventListener('scroll', handleScroll);
     };
   }, [isOpen, activeTab, hasMore, loading, displayedNotifications.length, dispatch]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const socketUrl = (import.meta.env.VITE_WS_URL as string) || API_BASE_URL;
+
+    const socket = io(socketUrl, {
+      transports: ['websocket'],
+      query: { userId: String(user.id) },
+    });
+
+    const handleNotification = (payload: any) => {
+      const notif: Notification = {
+        id: String(payload.id ?? Date.now()),
+        type: (payload.type as NotificationType) ?? 'post',
+        title: payload.title ?? 'Thông báo mới',
+        message: payload.description ?? payload.message ?? '',
+        read: !!(payload.read || payload.isRead),
+        createdAt: payload.createdAt ?? payload.created_at ?? new Date().toISOString(),
+        link: payload.url ?? payload.link,
+        metadata: payload.metadata,
+      };
+
+      dispatch(addNotification(notif));
+    };
+
+    socket.on('connect', () => {
+      console.debug('Notification socket connected', socket.id);
+    });
+
+    socket.on('notification', handleNotification);
+    socket.on('disconnect', () => {
+      console.debug('Notification socket disconnected');
+    });
+
+    return () => {
+      socket.off('notification', handleNotification);
+      socket.disconnect();
+    };
+  }, [user?.id, dispatch]);
 
   const handleMarkAsRead = (id: string) => {
     dispatch(markAsRead(id));
@@ -381,7 +426,9 @@ export const NotificationDropdown = () => {
                   <div className="flex flex-col items-center justify-center py-12 px-4">
                     <Bell className="w-12 h-12 text-foreground/30 mb-4" />
                     <p className="text-sm text-foreground/70">
-                      {activeTab === 'unread' ? 'Không có thông báo chưa đọc' : 'Không có thông báo nào'}
+                      {activeTab === 'unread'
+                        ? 'Không có thông báo chưa đọc'
+                        : 'Không có thông báo nào'}
                     </p>
                   </div>
                 ) : (

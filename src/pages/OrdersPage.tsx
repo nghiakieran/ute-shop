@@ -231,6 +231,7 @@ const OrdersPage = () => {
       ).unwrap();
 
       toast({
+        variant: 'success',
         title: 'Thành công!',
         description: 'Đánh giá của bạn đã được gửi',
       });
@@ -683,7 +684,7 @@ const OrdersPage = () => {
 
         {/* Review Dialog */}
         <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
-          <DialogContent className="max-w-2xl bg-white dark:bg-gray-900">
+          <DialogContent className="max-w-2xl bg-white ">
             <DialogHeader>
               <DialogTitle>Đánh giá sản phẩm</DialogTitle>
               <DialogDescription>{selectedProduct?.product.product.productName}</DialogDescription>

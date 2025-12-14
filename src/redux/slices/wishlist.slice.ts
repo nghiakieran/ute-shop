@@ -103,6 +103,11 @@ export const wishlistSlice = createAppSlice({
           state.favouriteIds = state.favouriteIds.filter((id) => id !== action.payload.productId);
           state.items = state.items.filter((item) => item.id !== action.payload.productId);
         }
+      })
+      .addDefaultCase((state) => {
+        if (!Array.isArray(state.favouriteIds)) {
+          state.favouriteIds = [];
+        }
       });
   },
 });
