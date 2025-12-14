@@ -23,85 +23,86 @@ export interface Notification {
 interface NotificationSliceState {
   notifications: Notification[];
   unreadCount: number;
+  hasMore: boolean;
+  page: number;
+  loading: boolean;
 }
 
-// Mock data
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'order',
-    title: 'Đơn hàng mới',
-    message: 'Bạn có 3 đơn hàng mới cần xử lý',
-    read: false,
-    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 phút trước
-    link: '/orders',
-    metadata: { orderId: 123 },
-  },
-  {
-    id: '2',
-    type: 'post',
-    title: 'Bài viết mới',
-    message: 'Có bài viết mới về "Xu hướng công nghệ 2024"',
-    read: false,
-    createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 phút trước
-    link: '/posts',
-    metadata: { postId: 45 },
-  },
-  {
-    id: '3',
-    type: 'event',
-    title: 'Sự kiện mới',
-    message: 'Sự kiện Flash Sale sẽ diễn ra vào ngày mai',
-    read: false,
-    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 phút trước
-    link: '/events',
-    metadata: { eventId: 12 },
-  },
-  {
-    id: '4',
-    type: 'review',
-    title: 'Đánh giá mới',
-    message: 'Bạn nhận được đánh giá 5 sao từ khách hàng',
-    read: false,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 giờ trước
-    link: '/reviews',
-    metadata: { reviewId: 78, productId: 5 },
-  },
-  {
-    id: '5',
-    type: 'comment',
-    title: 'Bình luận mới',
-    message: 'Có 5 bình luận mới trên sản phẩm của bạn',
-    read: false,
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 giờ trước
-    link: '/products/5',
-    metadata: { commentId: 23, productId: 5 },
-  },
-  {
-    id: '6',
-    type: 'order',
-    title: 'Đơn hàng đã giao',
-    message: 'Đơn hàng #456 đã được giao thành công',
-    read: true,
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 ngày trước
-    link: '/orders/456',
-    metadata: { orderId: 456 },
-  },
-  {
-    id: '7',
-    type: 'post',
-    title: 'Bài viết được yêu thích',
-    message: 'Bài viết của bạn đã nhận được 100 lượt thích',
-    read: true,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 ngày trước
-    link: '/posts/45',
-    metadata: { postId: 45 },
-  },
-];
+// Mock data generator - tạo nhiều thông báo để test infinite scroll
+const generateMockNotifications = (count: number): Notification[] => {
+  const types: NotificationType[] = ['order', 'post', 'event', 'review', 'comment'];
+  const notifications: Notification[] = [];
+
+  for (let i = 1; i <= count; i++) {
+    const type = types[Math.floor(Math.random() * types.length)];
+    // 30% đầu là chưa đọc, 70% sau là đã đọc
+    const isRead = i > Math.floor(count * 0.3) || Math.random() > 0.5;
+    const hoursAgo = Math.floor(Math.random() * 168); // 0-7 ngày trước
+
+    const titles = {
+      order: ['Đơn hàng mới', 'Đơn hàng đã giao', 'Đơn hàng đang xử lý', 'Đơn hàng bị hủy'],
+      post: ['Bài viết mới', 'Bài viết được yêu thích', 'Bài viết có bình luận mới'],
+      event: ['Sự kiện mới', 'Sự kiện sắp diễn ra', 'Sự kiện kết thúc'],
+      review: ['Đánh giá mới', 'Đánh giá 5 sao', 'Có đánh giá cần phản hồi'],
+      comment: ['Bình luận mới', 'Có bình luận mới', 'Bình luận được trả lời'],
+    };
+
+    const messages = {
+      order: [
+        `Bạn có ${Math.floor(Math.random() * 5) + 1} đơn hàng mới cần xử lý`,
+        `Đơn hàng #${1000 + i} đã được giao thành công`,
+        `Đơn hàng #${1000 + i} đang được xử lý`,
+      ],
+      post: [
+        'Có bài viết mới về "Xu hướng công nghệ 2024"',
+        'Bài viết của bạn đã nhận được nhiều lượt thích',
+        'Có người đã bình luận trên bài viết của bạn',
+      ],
+      event: [
+        'Sự kiện Flash Sale sẽ diễn ra vào ngày mai',
+        'Sự kiện Black Friday đang diễn ra',
+        'Sự kiện đã kết thúc, xem kết quả ngay',
+      ],
+      review: [
+        'Bạn nhận được đánh giá 5 sao từ khách hàng',
+        `Có ${Math.floor(Math.random() * 10) + 1} đánh giá mới`,
+        'Có đánh giá cần bạn phản hồi',
+      ],
+      comment: [
+        `Có ${Math.floor(Math.random() * 10) + 1} bình luận mới trên sản phẩm của bạn`,
+        'Có người đã trả lời bình luận của bạn',
+        'Bình luận của bạn đã được thích',
+      ],
+    };
+
+    notifications.push({
+      id: String(i),
+      type,
+      title: titles[type][Math.floor(Math.random() * titles[type].length)],
+      message: messages[type][Math.floor(Math.random() * messages[type].length)],
+      read: isRead,
+      createdAt: new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString(),
+      link: `/${type}s/${i}`,
+      metadata: {
+        [`${type}Id`]: 1000 + i,
+        ...(type === 'review' || type === 'comment' ? { productId: Math.floor(Math.random() * 50) + 1 } : {}),
+      },
+    });
+  }
+
+  return notifications;
+};
+
+const ITEMS_PER_PAGE = 10;
+const TOTAL_MOCK_ITEMS = 50; // Tổng số thông báo mock
+const allMockNotifications = generateMockNotifications(TOTAL_MOCK_ITEMS);
 
 const initialState: NotificationSliceState = {
-  notifications: mockNotifications,
-  unreadCount: mockNotifications.filter((n) => !n.read).length,
+  notifications: allMockNotifications.slice(0, ITEMS_PER_PAGE), // Load 10 đầu tiên
+  unreadCount: allMockNotifications.filter((n) => !n.read).length,
+  hasMore: allMockNotifications.length > ITEMS_PER_PAGE,
+  page: 1,
+  loading: false,
 };
 
 // ==================== SLICE ====================
@@ -145,6 +146,25 @@ export const notificationSlice = createAppSlice({
         state.unreadCount += 1;
       }
     }),
+    // Load more notifications (infinite scroll)
+    loadMoreNotifications: create.reducer((state) => {
+      if (state.loading || !state.hasMore) return;
+
+      state.loading = true;
+      const nextPage = state.page + 1;
+      const startIndex = state.page * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      const nextNotifications = allMockNotifications.slice(startIndex, endIndex);
+
+      if (nextNotifications.length > 0) {
+        state.notifications = [...state.notifications, ...nextNotifications];
+        state.page = nextPage;
+        state.hasMore = endIndex < allMockNotifications.length;
+      } else {
+        state.hasMore = false;
+      }
+      state.loading = false;
+    }),
   }),
 });
 
@@ -154,6 +174,7 @@ export const {
   removeNotification,
   clearAllNotifications,
   addNotification,
+  loadMoreNotifications,
 } = notificationSlice.actions;
 
 export const selectNotifications = (state: { notification: NotificationSliceState }) =>
@@ -165,5 +186,9 @@ export const selectUnreadNotifications = (state: { notification: NotificationSli
 export const selectNotificationsByType =
   (type: NotificationType) => (state: { notification: NotificationSliceState }) =>
     state.notification?.notifications?.filter((n) => n.type === type) ?? [];
+export const selectHasMore = (state: { notification: NotificationSliceState }) =>
+  state.notification?.hasMore ?? false;
+export const selectNotificationLoading = (state: { notification: NotificationSliceState }) =>
+  state.notification?.loading ?? false;
 
 export default notificationSlice.reducer;

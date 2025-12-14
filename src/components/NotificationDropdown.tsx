@@ -18,10 +18,13 @@ import {
   selectNotifications,
   selectUnreadCount,
   selectUnreadNotifications,
+  selectHasMore,
+  selectNotificationLoading,
   markAsRead,
   markAllAsRead,
   removeNotification,
   clearAllNotifications,
+  loadMoreNotifications,
   Notification,
   NotificationType,
 } from '@/redux/slices/notification.slice';
@@ -180,10 +183,13 @@ export const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
   const allNotifications = useAppSelector(selectNotifications);
   const unreadNotifications = useAppSelector(selectUnreadNotifications);
   const unreadCount = useAppSelector(selectUnreadCount);
+  const hasMore = useAppSelector(selectHasMore);
+  const loading = useAppSelector(selectNotificationLoading);
 
   // Lọc thông báo theo tab
   const displayedNotifications =
@@ -205,6 +211,30 @@ export const NotificationDropdown = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
+
+  // Infinite scroll - load more khi scroll gần cuối
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer || !isOpen) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      // Load more khi còn cách cuối 100px (chỉ load khi ở tab "all" hoặc khi tab "unread" còn ít items)
+      const shouldLoadMore =
+        activeTab === 'all'
+          ? hasMore && !loading
+          : displayedNotifications.length < 5 && hasMore && !loading; // Tab unread: load more nếu còn ít items
+
+      if (scrollHeight - scrollTop - clientHeight < 100 && shouldLoadMore) {
+        dispatch(loadMoreNotifications());
+      }
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+    };
+  }, [isOpen, activeTab, hasMore, loading, displayedNotifications.length, dispatch]);
 
   const handleMarkAsRead = (id: string) => {
     dispatch(markAsRead(id));
@@ -342,7 +372,11 @@ export const NotificationDropdown = () => {
               )}
 
               {/* Notifications List */}
-              <div className="overflow-y-auto flex-1">
+              <div
+                ref={scrollContainerRef}
+                className="overflow-y-auto flex-1"
+                style={{ scrollbarWidth: 'thin' }}
+              >
                 {displayedNotifications.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 px-4">
                     <Bell className="w-12 h-12 text-foreground/30 mb-4" />
@@ -351,16 +385,37 @@ export const NotificationDropdown = () => {
                     </p>
                   </div>
                 ) : (
-                  <AnimatePresence>
-                    {displayedNotifications.map((notification) => (
-                      <NotificationItem
-                        key={notification.id}
-                        notification={notification}
-                        onMarkAsRead={handleMarkAsRead}
-                        onRemove={handleRemove}
-                      />
-                    ))}
-                  </AnimatePresence>
+                  <>
+                    <AnimatePresence>
+                      {displayedNotifications.map((notification) => (
+                        <NotificationItem
+                          key={notification.id}
+                          notification={notification}
+                          onMarkAsRead={handleMarkAsRead}
+                          onRemove={handleRemove}
+                        />
+                      ))}
+                    </AnimatePresence>
+                    {/* Loading indicator */}
+                    {loading && (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="flex items-center space-x-2 text-sm text-foreground/70">
+                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                          <span>Đang tải...</span>
+                        </div>
+                      </div>
+                    )}
+                    {/* End of list indicator */}
+                    {!hasMore && displayedNotifications.length > 0 && (
+                      <div className="flex items-center justify-center py-4">
+                        <p className="text-xs text-foreground/50">
+                          {activeTab === 'all'
+                            ? 'Đã hiển thị tất cả thông báo'
+                            : 'Đã hiển thị tất cả thông báo chưa đọc'}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </motion.div>
