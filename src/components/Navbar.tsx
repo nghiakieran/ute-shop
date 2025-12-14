@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { selectIsAuthenticated, selectUser, logoutUser } from '@/redux/slices/auth.slice';
 import { selectCartItemCount } from '@/redux/slices/cart.slice';
 import { selectWishlistItemCount } from '@/redux/slices/wishlist.slice';
+import { NotificationDropdown } from './NotificationDropdown';
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -89,6 +90,9 @@ export const Navbar = () => {
                 </span>
               )}
             </Link>
+
+            {/* Notifications */}
+            {isAuthenticated && <NotificationDropdown />}
 
             {/* Cart Icon */}
             <Link
@@ -204,6 +208,11 @@ export const Navbar = () => {
               <Link to="/products" className="text-foreground hover:text-primary font-medium">
                 Products
               </Link>
+              {isAuthenticated && (
+                <div className="flex items-center justify-between  text-foreground hover:text-primary font-medium">
+                  <NotificationDropdown />
+                </div>
+              )}
               <Link
                 to="/wishlist"
                 className="text-foreground hover:text-primary font-medium flex items-center justify-between"
