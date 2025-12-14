@@ -17,3 +17,4 @@ export * from './CommentCard';
 export * from './CommentForm';
 export * from './CommentList';
 export * from './SimilarProducts';
+export * from './NotificationDropdown';
