@@ -13,4 +13,8 @@ export * from './Loading';
 export * from './ReviewForm';
 export * from './ReviewCard';
 export * from './VoucherCard';
+export * from './CommentCard';
+export * from './CommentForm';
+export * from './CommentList';
 export * from './SimilarProducts';
+export * from './NotificationDropdown';

@@ -117,13 +117,13 @@ export const { clearWishlist } = wishlistSlice.actions;
 
 // Export selectors
 export const selectWishlistItems = (state: { wishlist: WishlistSliceState }) =>
-  state.wishlist.items;
+  state.wishlist?.items ?? [];
 export const selectWishlistItemCount = (state: { wishlist: WishlistSliceState }) =>
-  state.wishlist.items.length;
+  state.wishlist?.items?.length ?? 0;
 export const selectIsInWishlist =
   (productId: number) => (state: { wishlist: WishlistSliceState }) =>
     state.wishlist?.favouriteIds?.includes(productId) ?? false;
 export const selectWishlistLoading = (state: { wishlist: WishlistSliceState }) =>
-  state.wishlist.loading;
+  state.wishlist?.loading ?? false;
 
 export default wishlistSlice.reducer;

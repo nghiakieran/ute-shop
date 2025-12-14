@@ -18,7 +18,16 @@ import 'swiper/css/zoom';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { addToCart } from '@/redux/slices/cart.slice';
 import { fetchProductReviews, selectReviews, selectReviewStats } from '@/redux/slices/review.slice';
-import { Button, Loading, ReviewCard, SimilarProducts } from '@/components';
+import {
+  fetchProductComments,
+  submitComment,
+  editComment,
+  removeComment,
+  selectComments,
+  selectCommentLoading,
+  selectCommentPagination,
+} from '@/redux/slices/comment.slice';
+import { Button, Loading, ReviewCard, SimilarProducts, CommentList } from '@/components';
 import { useAuth } from '@/hooks';
 import { MainLayout } from '@/layouts';
 import { getProductDetail } from '@/utils/product.api';
@@ -31,6 +40,9 @@ const ProductDetailPage = () => {
   const { isAuthenticated } = useAuth();
   const reviews = useAppSelector(selectReviews);
   const reviewStats = useAppSelector(selectReviewStats);
+  const comments = useAppSelector(selectComments);
+  const commentsLoading = useAppSelector(selectCommentLoading);
+  const commentsPagination = useAppSelector(selectCommentPagination);
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -46,6 +58,7 @@ const ProductDetailPage = () => {
   useEffect(() => {
     if (product?.id) {
       dispatch(fetchProductReviews(product.id));
+      dispatch(fetchProductComments({ productId: product.id, page: 1, limit: 5 }));
     }
   }, [product?.id, dispatch]);
 
@@ -104,7 +117,7 @@ const ProductDetailPage = () => {
 
       // Custom toast with product image and details
       toast.success(
-        (_t: any) => (
+        () => (
           <div className="flex items-center gap-3">
             <img
               src={product.images?.[0]?.url || 'https://via.placeholder.com/48'}
@@ -526,6 +539,56 @@ const ProductDetailPage = () => {
             </div>
           </div>
 
+          {/* Comments Section */}
+          <div className="container-custom py-12">
+            <div className="bg-card rounded-lg border border-border p-8">
+              <h2 className="text-2xl font-serif font-bold mb-6">Bình luận</h2>
+              <CommentList
+                comments={comments}
+                loading={commentsLoading}
+                pagination={commentsPagination}
+                onSubmitComment={async (description, parentId) => {
+                  if (!product?.id) return;
+                  try {
+                    await dispatch(
+                      submitComment({
+                        productId: product.id,
+                        description,
+                        parentId,
+                      })
+                    ).unwrap();
+                    toast.success('Bình luận đã được gửi');
+                  } catch (error: any) {
+                    toast.error(error || 'Không thể gửi bình luận');
+                  }
+                }}
+                onEditComment={async (id, description) => {
+                  try {
+                    await dispatch(editComment({ id, data: { description } })).unwrap();
+                    toast.success('Bình luận đã được cập nhật');
+                  } catch (error: any) {
+                    toast.error(error || 'Không thể cập nhật bình luận');
+                  }
+                }}
+                onDeleteComment={async (id) => {
+                  try {
+                    await dispatch(removeComment(id)).unwrap();
+                    toast.success('Bình luận đã được xóa');
+                  } catch (error: any) {
+                    toast.error(error || 'Không thể xóa bình luận');
+                  }
+                }}
+                onLoadMore={async () => {
+                  if (!product?.id || !commentsPagination) return;
+                  const nextPage = commentsPagination.page + 1;
+                  await dispatch(
+                    fetchProductComments({ productId: product.id, page: nextPage, limit: 5 })
+                  ).unwrap();
+                }}
+                productId={product?.id || 0}
+              />
+            </div>
+          </div>
           {/* Similar Products Section */}
           {product?.id && (
             <div className="container-custom py-12">
