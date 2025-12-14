@@ -22,6 +22,7 @@ import {
   Tag,
   Users,
   ChevronRight,
+  CalendarClock,
 } from 'lucide-react';
 
 const menuItems = [
@@ -32,6 +33,7 @@ const menuItems = [
   { title: 'Thương hiệu & Danh mục', url: '/admin/brands-categories', icon: Tag },
   { title: 'Khuyến mãi', url: '/admin/promotions', icon: Percent },
   { title: 'Tin nhắn', url: '/admin/messages', icon: MessageCircle },
+  { title: 'Sự kiện', url: '/admin/events', icon: CalendarClock },
 ];
 
 function SidebarHeaderContent({ collapsible }: { collapsible?: boolean }) {
@@ -72,9 +74,10 @@ export function AdminSidebar({ collapsible }: { collapsible?: boolean }) {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
-                const isActive = item.url === '/admin'
-                  ? location.pathname === '/admin'
-                  : location.pathname.startsWith(item.url);
+                const isActive =
+                  item.url === '/admin'
+                    ? location.pathname === '/admin'
+                    : location.pathname.startsWith(item.url);
 
                 return (
                   <SidebarMenuItem key={item.title}>
@@ -86,9 +89,7 @@ export function AdminSidebar({ collapsible }: { collapsible?: boolean }) {
                       >
                         <item.icon className="h-4 w-4" />
                         <span className="flex-1">{item.title}</span>
-                        {isActive && (
-                          <ChevronRight className="h-4 w-4 text-primary" />
-                        )}
+                        {isActive && <ChevronRight className="h-4 w-4 text-primary" />}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

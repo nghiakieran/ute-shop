@@ -1,4 +1,6 @@
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../createAppSlice';
+import { notificationAPI } from '@/utils/notification.api';
 
 export type NotificationType = 'order' | 'post' | 'event' | 'review' | 'comment';
 
@@ -17,6 +19,7 @@ export interface Notification {
     reviewId?: number;
     commentId?: number;
     productId?: number;
+    [key: string]: any;
   };
 }
 
@@ -25,169 +28,214 @@ interface NotificationSliceState {
   unreadCount: number;
   hasMore: boolean;
   page: number;
+  limit: number;
   loading: boolean;
+  error: string | null;
 }
 
-// Mock data generator - tạo nhiều thông báo để test infinite scroll
-const generateMockNotifications = (count: number): Notification[] => {
-  const types: NotificationType[] = ['order', 'post', 'event', 'review', 'comment'];
-  const notifications: Notification[] = [];
-
-  for (let i = 1; i <= count; i++) {
-    const type = types[Math.floor(Math.random() * types.length)];
-    // 30% đầu là chưa đọc, 70% sau là đã đọc
-    const isRead = i > Math.floor(count * 0.3) || Math.random() > 0.5;
-    const hoursAgo = Math.floor(Math.random() * 168); // 0-7 ngày trước
-
-    const titles = {
-      order: ['Đơn hàng mới', 'Đơn hàng đã giao', 'Đơn hàng đang xử lý', 'Đơn hàng bị hủy'],
-      post: ['Bài viết mới', 'Bài viết được yêu thích', 'Bài viết có bình luận mới'],
-      event: ['Sự kiện mới', 'Sự kiện sắp diễn ra', 'Sự kiện kết thúc'],
-      review: ['Đánh giá mới', 'Đánh giá 5 sao', 'Có đánh giá cần phản hồi'],
-      comment: ['Bình luận mới', 'Có bình luận mới', 'Bình luận được trả lời'],
-    };
-
-    const messages = {
-      order: [
-        `Bạn có ${Math.floor(Math.random() * 5) + 1} đơn hàng mới cần xử lý`,
-        `Đơn hàng #${1000 + i} đã được giao thành công`,
-        `Đơn hàng #${1000 + i} đang được xử lý`,
-      ],
-      post: [
-        'Có bài viết mới về "Xu hướng công nghệ 2024"',
-        'Bài viết của bạn đã nhận được nhiều lượt thích',
-        'Có người đã bình luận trên bài viết của bạn',
-      ],
-      event: [
-        'Sự kiện Flash Sale sẽ diễn ra vào ngày mai',
-        'Sự kiện Black Friday đang diễn ra',
-        'Sự kiện đã kết thúc, xem kết quả ngay',
-      ],
-      review: [
-        'Bạn nhận được đánh giá 5 sao từ khách hàng',
-        `Có ${Math.floor(Math.random() * 10) + 1} đánh giá mới`,
-        'Có đánh giá cần bạn phản hồi',
-      ],
-      comment: [
-        `Có ${Math.floor(Math.random() * 10) + 1} bình luận mới trên sản phẩm của bạn`,
-        'Có người đã trả lời bình luận của bạn',
-        'Bình luận của bạn đã được thích',
-      ],
-    };
-
-    notifications.push({
-      id: String(i),
-      type,
-      title: titles[type][Math.floor(Math.random() * titles[type].length)],
-      message: messages[type][Math.floor(Math.random() * messages[type].length)],
-      read: isRead,
-      createdAt: new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString(),
-      link: `/${type}s/${i}`,
-      metadata: {
-        [`${type}Id`]: 1000 + i,
-        ...(type === 'review' || type === 'comment' ? { productId: Math.floor(Math.random() * 50) + 1 } : {}),
-      },
-    });
-  }
-
-  return notifications;
-};
-
-const ITEMS_PER_PAGE = 10;
-const TOTAL_MOCK_ITEMS = 50; // Tổng số thông báo mock
-const allMockNotifications = generateMockNotifications(TOTAL_MOCK_ITEMS);
-
 const initialState: NotificationSliceState = {
-  notifications: allMockNotifications.slice(0, ITEMS_PER_PAGE), // Load 10 đầu tiên
-  unreadCount: allMockNotifications.filter((n) => !n.read).length,
-  hasMore: allMockNotifications.length > ITEMS_PER_PAGE,
+  notifications: [],
+  unreadCount: 0,
+  hasMore: true,
   page: 1,
+  limit: 10,
   loading: false,
+  error: null,
 };
 
-// ==================== SLICE ====================
+const mapNotificationData = (data: any): Notification => ({
+  id: String(data.id),
+  type: (data.type as NotificationType) || 'post',
+  title: data.title,
+  message: data.description || data.message || '',
+  read: data.read ?? data.isRead ?? false,
+  createdAt: data.createdAt || data.created_at,
+  link: data.url || data.link,
+  metadata: data.metadata || {},
+});
+
+export const loadMoreNotifications = createAsyncThunk(
+  'notification/loadMore',
+  async (_, { getState, rejectWithValue }) => {
+    const state = (getState() as any).notification as NotificationSliceState;
+
+    try {
+      const response = await notificationAPI.getNotifications(state.page, state.limit);
+      console.log('API Response:', response);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || 'Lỗi tải thông báo');
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = (getState() as any).notification as NotificationSliceState;
+
+      if (!state) {
+        console.error('⚠️ Redux State "notification" not found. Check store.ts!');
+        return false;
+      }
+
+      if (state.loading) {
+        console.log('🚫 Skipped loading: Already loading');
+        return false;
+      }
+
+      if (!state.hasMore) {
+        console.log('🚫 Skipped loading: No more data');
+        return false;
+      }
+
+      return true;
+    },
+  }
+);
+
+export const markAsRead = createAsyncThunk(
+  'notification/markAsRead',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await notificationAPI.markAsRead(id);
+      return id;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const markAllAsRead = createAsyncThunk(
+  'notification/markAllAsRead',
+  async (_, { rejectWithValue }) => {
+    try {
+      await notificationAPI.markAllAsRead();
+      return true;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const removeNotification = createAsyncThunk(
+  'notification/remove',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await notificationAPI.removeNotification(id);
+      return id;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const clearAllNotifications = createAsyncThunk(
+  'notification/clearAll',
+  async (_, { rejectWithValue }) => {
+    try {
+      await notificationAPI.clearAllNotifications();
+      return true;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 export const notificationSlice = createAppSlice({
   name: 'notification',
   initialState,
   reducers: (create) => ({
-    // Đánh dấu thông báo là đã đọc
-    markAsRead: create.reducer((state, action: { payload: string }) => {
-      const notification = state.notifications.find((n) => n.id === action.payload);
-      if (notification && !notification.read) {
-        notification.read = true;
-        state.unreadCount = Math.max(0, state.unreadCount - 1);
-      }
-    }),
-    // Đánh dấu tất cả là đã đọc
-    markAllAsRead: create.reducer((state) => {
-      state.notifications.forEach((notification) => {
-        notification.read = true;
-      });
-      state.unreadCount = 0;
-    }),
-    // Xóa thông báo
-    removeNotification: create.reducer((state, action: { payload: string }) => {
-      const notification = state.notifications.find((n) => n.id === action.payload);
-      if (notification && !notification.read) {
-        state.unreadCount = Math.max(0, state.unreadCount - 1);
-      }
-      state.notifications = state.notifications.filter((n) => n.id !== action.payload);
-    }),
-    // Xóa tất cả thông báo
-    clearAllNotifications: create.reducer((state) => {
-      state.notifications = [];
-      state.unreadCount = 0;
-    }),
-    // Thêm thông báo mới (dang mock - CALL API day nha)
-    addNotification: create.reducer((state, action: { payload: Notification }) => {
+    addNotification: create.reducer((state, action: PayloadAction<Notification>) => {
       state.notifications.unshift(action.payload);
       if (!action.payload.read) {
         state.unreadCount += 1;
       }
     }),
-    // Load more notifications (infinite scroll)
-    loadMoreNotifications: create.reducer((state) => {
-      if (state.loading || !state.hasMore) return;
 
-      state.loading = true;
-      const nextPage = state.page + 1;
-      const startIndex = state.page * ITEMS_PER_PAGE;
-      const endIndex = startIndex + ITEMS_PER_PAGE;
-      const nextNotifications = allMockNotifications.slice(startIndex, endIndex);
-
-      if (nextNotifications.length > 0) {
-        state.notifications = [...state.notifications, ...nextNotifications];
-        state.page = nextPage;
-        state.hasMore = endIndex < allMockNotifications.length;
-      } else {
-        state.hasMore = false;
-      }
-      state.loading = false;
-    }),
+    resetState: create.reducer(() => initialState),
   }),
+
+  extraReducers: (builder) => {
+    builder
+      .addCase(loadMoreNotifications.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadMoreNotifications.fulfilled, (state, action) => {
+        state.loading = false;
+
+        const { data, total } = action.payload;
+
+        const newItems = data.map(mapNotificationData);
+
+        const uniqueNewItems = newItems.filter(
+          (newItem) => !state.notifications.some((exist) => exist.id === newItem.id)
+        );
+
+        state.notifications = [...state.notifications, ...uniqueNewItems];
+
+        const newUnread = uniqueNewItems.filter((i) => !i.read).length;
+        state.unreadCount += newUnread;
+
+        if (state.notifications.length >= total || data.length === 0) {
+          state.hasMore = false;
+        } else {
+          state.page += 1;
+          state.hasMore = true;
+        }
+      })
+      .addCase(loadMoreNotifications.rejected, (state, action) => {
+        state.loading = false;
+        if (action.payload !== 'No more data') {
+          state.error = action.payload as string;
+        }
+      })
+
+      .addCase(markAsRead.fulfilled, (state, action) => {
+        const id = action.payload;
+        const item = state.notifications.find((n) => n.id === id);
+        if (item && !item.read) {
+          item.read = true;
+          state.unreadCount = Math.max(0, state.unreadCount - 1);
+        }
+      })
+
+      .addCase(markAllAsRead.fulfilled, (state) => {
+        state.notifications.forEach((n) => {
+          n.read = true;
+        });
+        state.unreadCount = 0;
+      })
+
+      .addCase(removeNotification.fulfilled, (state, action) => {
+        const id = action.payload;
+        const item = state.notifications.find((n) => n.id === id);
+        if (item && !item.read) {
+          state.unreadCount = Math.max(0, state.unreadCount - 1);
+        }
+        state.notifications = state.notifications.filter((n) => n.id !== id);
+      })
+
+      .addCase(clearAllNotifications.fulfilled, (state) => {
+        state.notifications = [];
+        state.unreadCount = 0;
+        state.hasMore = false;
+      });
+  },
 });
 
-export const {
-  markAsRead,
-  markAllAsRead,
-  removeNotification,
-  clearAllNotifications,
-  addNotification,
-  loadMoreNotifications,
-} = notificationSlice.actions;
+export const { addNotification, resetState } = notificationSlice.actions;
 
 export const selectNotifications = (state: { notification: NotificationSliceState }) =>
   state.notification?.notifications ?? [];
+
 export const selectUnreadCount = (state: { notification: NotificationSliceState }) =>
   state.notification?.unreadCount ?? 0;
+
 export const selectUnreadNotifications = (state: { notification: NotificationSliceState }) =>
   state.notification?.notifications?.filter((n) => !n.read) ?? [];
-export const selectNotificationsByType =
-  (type: NotificationType) => (state: { notification: NotificationSliceState }) =>
-    state.notification?.notifications?.filter((n) => n.type === type) ?? [];
+
 export const selectHasMore = (state: { notification: NotificationSliceState }) =>
   state.notification?.hasMore ?? false;
+
 export const selectNotificationLoading = (state: { notification: NotificationSliceState }) =>
   state.notification?.loading ?? false;
 
