@@ -27,6 +27,7 @@ import reviewReducer from './slices/review.slice';
 import commentReducer from './slices/comment.slice';
 import recentlyViewedReducer from './slices/recently-viewed.slice';
 import notificationReducer from './slices/notification.slice';
+import chatReducer from './slices/chat.slice';
 import { adminProductReducer } from './slices/admin/productManage.slice';
 import { adminBrandsCategorieseducer } from './slices/admin/brandCategoryManage.slice';
 
@@ -50,6 +51,7 @@ const rootReducer = combineReducers({
   comment: commentReducer,
   recentlyViewed: recentlyViewedReducer,
   notification: notificationReducer,
+  chat: chatReducer,
   productManage: adminProductReducer,
   brandsCategoriesManage: adminBrandsCategorieseducer,
 });
