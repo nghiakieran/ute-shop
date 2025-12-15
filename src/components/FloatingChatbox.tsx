@@ -1,10 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, ExternalLink } from 'lucide-react';
+import { MessageCircle, X, Send, ExternalLink, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { socketService } from '@/services/socket.service';
+import { ChatMessage, uploadImage, getMyConversation } from '@/redux/slices/chat.slice';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/redux/store';
+import toast from 'react-hot-toast';
 
 interface LinkPreview {
     url: string;
@@ -14,102 +19,151 @@ interface LinkPreview {
     type: 'product' | 'general';
 }
 
-interface Message {
-    id: number;
-    content: string;
-    isUser: boolean;
-    timestamp: Date;
+interface Message extends ChatMessage {
     linkPreview?: LinkPreview;
 }
 
-// Mock product data for preview
-const mockProducts: Record<string, LinkPreview> = {
-    'nike-air-force-1-07': {
-        url: '/products/nike-air-force-1-07',
-        title: 'Nike Air Force 1 \'07',
-        description: 'Giày thể thao Nike Air Force 1 classic với thiết kế iconic, phù hợp mọi phong cách.',
-        image: 'https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/b7d9211c-26e7-431a-ac24-b0540fb3c00f/air-force-1-07-shoes-WrLlWX.png',
-        type: 'product',
-    },
-    'adidas-ultraboost-22': {
-        url: '/products/adidas-ultraboost-22',
-        title: 'Adidas Ultraboost 22',
-        description: 'Giày chạy bộ cao cấp với công nghệ Boost, mang lại sự thoải mái tối đa.',
-        image: 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/fbaf991a78bc4896a3e9ad7800abcec6_9366/Ultraboost_22_Shoes_Black_GZ0127_01_standard.jpg',
-        type: 'product',
-    },
-};
-
-const mockMessages: Message[] = [
-    {
-        id: 1,
-        content: 'Xin chào! Chúng tôi có thể giúp gì cho bạn?',
-        isUser: false,
-        timestamp: new Date(Date.now() - 5 * 60 * 1000),
-    },
-];
-
 export function FloatingChatbox() {
+    const dispatch = useDispatch<AppDispatch>();
     const [isOpen, setIsOpen] = useState(false);
-    const [messages, setMessages] = useState<Message[]>(mockMessages);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState('');
+    const [uploading, setUploading] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const user = useSelector((state: RootState) => state.auth.user);
+    const userId = user?.id ? Number(user.id) : null;
+    const conversationId = userId ? `user-${userId}` : '';
 
     // Auto-scroll to bottom when messages change
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // Detect URL in message and extract preview
-    const detectLinkPreview = (text: string): LinkPreview | undefined => {
-        // Regex to detect URLs
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        const matches = text.match(urlRegex);
+    // Connect to socket and load messages when component mounts
+    useEffect(() => {
+        if (!userId) return;
 
-        if (!matches) return undefined;
+        // Connect to socket
+        socketService.connect(userId, false);
+        socketService.joinChat(conversationId);
 
-        const url = matches[0];
-
-        // Check if it's a product link
-        const productMatch = url.match(/\/products\/([a-z0-9-]+)/i);
-        if (productMatch) {
-            const productSlug = productMatch[1];
-            return mockProducts[productSlug];
-        }
-
-        return undefined;
-    };
-
-    const handleSend = () => {
-        if (!inputValue.trim()) return;
-
-        // Detect link preview
-        const linkPreview = detectLinkPreview(inputValue);
-
-        // Add user message
-        const userMessage: Message = {
-            id: messages.length + 1,
-            content: inputValue,
-            isUser: true,
-            timestamp: new Date(),
-            linkPreview,
+        // Listen for new messages
+        const handleNewMessage = (message: ChatMessage) => {
+            if (message.conversationId === conversationId) {
+                setMessages((prev) => [...prev, message as Message]);
+            }
         };
 
-        setMessages([...messages, userMessage]);
-        setInputValue('');
+        socketService.onNewMessage(handleNewMessage);
 
-        // Simulate admin response after 1 second
-        setTimeout(() => {
-            const adminMessage: Message = {
-                id: messages.length + 2,
-                content: linkPreview
-                    ? `Tôi thấy bạn quan tâm đến sản phẩm "${linkPreview.title}". Bạn cần tư vấn thêm không?`
-                    : 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.',
-                isUser: false,
-                timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, adminMessage]);
-        }, 1000);
+        return () => {
+            socketService.offNewMessage(handleNewMessage);
+        };
+    }, [userId, conversationId]);
+
+    // Load conversation history when chatbox opens
+    useEffect(() => {
+        if (isOpen && userId) {
+            // Load conversation history from API
+            dispatch(getMyConversation())
+                .unwrap()
+                .then((conversation) => {
+                    if (conversation.messages) {
+                        setMessages(conversation.messages as Message[]);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Failed to load conversation:', error);
+                });
+        }
+    }, [isOpen, userId, dispatch]);
+
+    // No need to load messages - WebSocket handles real-time updates
+
+    // Detect URL in message and extract preview
+    // const detectLinkPreview = (text: string): LinkPreview | undefined => {
+    //     const urlRegex = /(https?:\/\/[^\s]+)/g;
+    //     const matches = text.match(urlRegex);
+
+    //     if (!matches) return undefined;
+
+    //     const url = matches[0];
+    //     const productMatch = url.match(/\/products\/([a-z0-9-]+)/i);
+    //     if (productMatch) {
+    //         const productSlug = productMatch[1];
+    //         return mockProducts[productSlug];
+    //     }
+
+    //     return undefined;
+    // };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Vui lòng chọn file ảnh');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Kích thước ảnh không được vượt quá 5MB');
+            return;
+        }
+
+        setSelectedFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const clearImage = () => {
+        setSelectedFile(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleSend = async () => {
+        if (!inputValue.trim() && !selectedFile) return;
+        if (!userId) {
+            toast.error('Vui lòng đăng nhập để chat');
+            return;
+        }
+
+        try {
+            let imageUrl: string | undefined;
+
+            // Upload image if selected
+            if (selectedFile) {
+                const result = await dispatch(uploadImage(selectedFile)).unwrap();
+                imageUrl = result.url;
+                clearImage();
+            }
+
+            // Send message via socket
+            await socketService.sendMessage({
+                conversationId,
+                senderId: userId,
+                content: inputValue.trim() || '📷 Hình ảnh',
+                imageUrl,
+                isAdminReply: false,
+            });
+
+            setInputValue('');
+        } catch (error) {
+            console.error('Error sending message:', error);
+            toast.error('Không thể gửi tin nhắn');
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -119,9 +173,12 @@ export function FloatingChatbox() {
         }
     };
 
-    const formatTime = (date: Date) => {
-        return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const formatTime = (date: string | Date) => {
+        const d = typeof date === 'string' ? new Date(date) : date;
+        return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     };
+
+    if (!user) return null;
 
     return (
         <>
@@ -160,7 +217,6 @@ export function FloatingChatbox() {
                                 <h3 className="font-semibold">Chat với chúng tôi</h3>
                                 <p className="text-xs opacity-90">Chúng tôi luôn sẵn sàng hỗ trợ bạn</p>
                             </div>
-                            {/* Close button in header */}
                             <Button
                                 onClick={() => setIsOpen(false)}
                                 variant="ghost"
@@ -179,17 +235,24 @@ export function FloatingChatbox() {
                                 key={message.id}
                                 className={cn(
                                     'flex',
-                                    message.isUser ? 'justify-end' : 'justify-start'
+                                    message.isAdminReply ? 'justify-start' : 'justify-end'
                                 )}
                             >
                                 <div
                                     className={cn(
                                         'max-w-[75%] rounded-lg p-3',
-                                        message.isUser
-                                            ? 'bg-primary text-primary-foreground'
-                                            : 'bg-background border'
+                                        message.isAdminReply
+                                            ? 'bg-background border'
+                                            : 'bg-primary text-primary-foreground'
                                     )}
                                 >
+                                    {message.imageUrl && (
+                                        <img
+                                            src={message.imageUrl}
+                                            alt="Uploaded"
+                                            className="rounded-lg mb-2 max-w-full h-auto"
+                                        />
+                                    )}
                                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
 
                                     {/* Link Preview Card */}
@@ -209,26 +272,26 @@ export function FloatingChatbox() {
                                             </div>
                                             <div className={cn(
                                                 "p-2",
-                                                message.isUser ? "bg-primary-foreground/10" : "bg-muted"
+                                                message.isAdminReply ? "bg-muted" : "bg-primary-foreground/10"
                                             )}>
                                                 <div className="flex items-start gap-2">
                                                     <div className="flex-1 min-w-0">
                                                         <p className={cn(
                                                             "font-semibold text-xs truncate",
-                                                            message.isUser ? "text-primary-foreground" : "text-foreground"
+                                                            message.isAdminReply ? "text-foreground" : "text-primary-foreground"
                                                         )}>
                                                             {message.linkPreview.title}
                                                         </p>
                                                         <p className={cn(
                                                             "text-xs line-clamp-2 mt-0.5",
-                                                            message.isUser ? "text-primary-foreground/80" : "text-muted-foreground"
+                                                            message.isAdminReply ? "text-muted-foreground" : "text-primary-foreground/80"
                                                         )}>
                                                             {message.linkPreview.description}
                                                         </p>
                                                     </div>
                                                     <ExternalLink className={cn(
                                                         "h-3 w-3 shrink-0 mt-0.5",
-                                                        message.isUser ? "text-primary-foreground/60" : "text-muted-foreground"
+                                                        message.isAdminReply ? "text-muted-foreground" : "text-primary-foreground/60"
                                                     )} />
                                                 </div>
                                             </div>
@@ -236,7 +299,7 @@ export function FloatingChatbox() {
                                     )}
 
                                     <span className="text-xs opacity-70 mt-1 block">
-                                        {formatTime(message.timestamp)}
+                                        {formatTime(message.createdAt)}
                                     </span>
                                 </div>
                             </div>
@@ -246,16 +309,53 @@ export function FloatingChatbox() {
 
                     {/* Input */}
                     <div className="border-t p-4 bg-background">
+                        {imagePreview && (
+                            <div className="mb-2 relative inline-block">
+                                <img src={imagePreview} alt="Preview" className="h-20 rounded-lg" />
+                                <Button
+                                    onClick={clearImage}
+                                    size="icon"
+                                    variant="destructive"
+                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
                         <div className="flex gap-2">
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileSelect}
+                                className="hidden"
+                            />
+                            <Button
+                                onClick={() => fileInputRef.current?.click()}
+                                size="icon"
+                                variant="outline"
+                                disabled={uploading}
+                            >
+                                <ImageIcon className="h-4 w-4" />
+                            </Button>
                             <Input
                                 placeholder="Nhập tin nhắn..."
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 onKeyPress={handleKeyPress}
                                 className="flex-1"
+                                disabled={uploading}
                             />
-                            <Button onClick={handleSend} size="icon" disabled={!inputValue.trim()}>
-                                <Send className="h-4 w-4" />
+                            <Button
+                                onClick={handleSend}
+                                size="icon"
+                                disabled={(!inputValue.trim() && !selectedFile) || uploading}
+                            >
+                                {uploading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Send className="h-4 w-4" />
+                                )}
                             </Button>
                         </div>
                     </div>

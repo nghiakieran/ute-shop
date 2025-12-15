@@ -3,161 +3,115 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import {
-    getAllConversations,
-    getConversationById,
-    markConversationAsRead,
-    sendMessage,
-    type Conversation,
-    type ConversationDetail
-} from '@/utils/message.api';
-import { getMockConversationDetail, mockConversations } from '@/utils/message.mock';
+import { socketService } from '@/services/socket.service';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { CheckCheck, Clock, Search, Send } from 'lucide-react';
+import { CheckCheck, Clock, Search, Send, Image as ImageIcon, Loader2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-
-// Set to true to use mock data, false to use real API
-const USE_MOCK_DATA = true;
+import { useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '@/redux/store';
+import { useDispatch } from 'react-redux';
+import toast from 'react-hot-toast';
+import {
+    ChatMessage,
+    getAllConversations,
+    getConversationById,
+    uploadImage,
+    markAsRead,
+    addMessage,
+    selectConversations,
+    selectSelectedConversation,
+    selectChatLoading,
+    selectChatSending,
+    selectChatUploading,
+} from '@/redux/slices/chat.slice';
 
 export default function Messages() {
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [selectedConversation, setSelectedConversation] = useState<ConversationDetail | null>(
-        null
-    );
+    const dispatch = useDispatch<AppDispatch>();
+    const conversations = useSelector(selectConversations);
+    const selectedConversation = useSelector(selectSelectedConversation);
+    const loading = useSelector(selectChatLoading);
+    const sending = useSelector(selectChatSending);
+    const uploading = useSelector(selectChatUploading);
+
     const [searchTerm, setSearchTerm] = useState('');
     const [messageInput, setMessageInput] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [sending, setSending] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const user = useSelector((state: RootState) => state.auth.user);
+    const adminId = user?.id ? Number(user.id) : null;
 
     // Load conversations
-    const loadConversations = async () => {
-        try {
-            setLoading(true);
-
-            if (USE_MOCK_DATA) {
-                // Use mock data
-                let filteredConversations = [...mockConversations];
-
-                // Filter by search term
-                if (searchTerm) {
-                    filteredConversations = filteredConversations.filter(
-                        (c) =>
-                            c.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            c.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
-                    );
-                }
-
-                setConversations(filteredConversations);
-            } else {
-                // Use real API
-                const response = await getAllConversations(
-                    1,
-                    20,
-                    undefined,
-                    searchTerm || undefined
-                );
-                setConversations(response.data);
-            }
-        } catch (error) {
-            console.error('Failed to load conversations:', error);
-        } finally {
-            setLoading(false);
-        }
+    const loadConversations = () => {
+        dispatch(getAllConversations());
     };
-
 
     // Load conversation details
-    const loadConversationDetails = async (id: number) => {
-        try {
-            if (USE_MOCK_DATA) {
-                // Use mock data
-                const conversation = getMockConversationDetail(id);
-                if (conversation) {
-                    setSelectedConversation(conversation);
-
-                    // Update unread count in conversations list
-                    setConversations((prev) =>
-                        prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
-                    );
-                }
-            } else {
-                // Use real API
-                const conversation = await getConversationById(id);
-                setSelectedConversation(conversation);
-                // Mark as read
-                await markConversationAsRead(id);
-                // Refresh conversations to update unread count
-                loadConversations();
-            }
-        } catch (error) {
-            console.error('Failed to load conversation:', error);
-        }
+    const loadConversationDetails = (id: string) => {
+        dispatch(getConversationById(id));
+        dispatch(markAsRead(id)); // Mark as read via Redux
     };
 
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
+        if (!file.type.startsWith('image/')) {
+            toast.error('Vui lòng chọn file ảnh');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Kích thước ảnh không được vượt quá 5MB');
+            return;
+        }
+
+        setSelectedFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const clearImage = () => {
+        setSelectedFile(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
     // Send message
     const handleSendMessage = async () => {
-        if (!messageInput.trim() || !selectedConversation || sending) return;
+        if ((!messageInput.trim() && !selectedFile) || !selectedConversation || sending || !adminId) return;
 
         try {
-            setSending(true);
+            let imageUrl: string | undefined;
 
-            if (USE_MOCK_DATA) {
-                // Create mock message
-                const newMessage = {
-                    id: Date.now(),
-                    conversationId: selectedConversation.id,
-                    senderId: 1,
-                    senderName: 'Admin',
-                    content: messageInput.trim(),
-                    isAdminReply: true,
-                    isRead: false,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                };
-
-                // Update conversation with new message
-                setSelectedConversation({
-                    ...selectedConversation,
-                    messages: [...selectedConversation.messages, newMessage],
-                    lastMessageContent: messageInput.trim(),
-                    lastMessageAt: new Date().toISOString(),
-                });
-
-                // Update conversations list
-                setConversations((prev) =>
-                    prev.map((c) =>
-                        c.id === selectedConversation.id
-                            ? {
-                                ...c,
-                                lastMessageContent: messageInput.trim(),
-                                lastMessageAt: new Date().toISOString(),
-                            }
-                            : c
-                    )
-                );
-            } else {
-                // Use real API
-                const newMessage = await sendMessage(selectedConversation.id, messageInput.trim());
-
-                // Update conversation with new message
-                setSelectedConversation({
-                    ...selectedConversation,
-                    messages: [...selectedConversation.messages, newMessage],
-                });
-
-                // Refresh conversations list
-                loadConversations();
+            // Upload image if selected
+            if (selectedFile) {
+                const result = await dispatch(uploadImage(selectedFile)).unwrap();
+                imageUrl = result.url;
+                clearImage();
             }
+
+            // Send message via socket
+            await socketService.sendMessage({
+                conversationId: selectedConversation.id,
+                senderId: adminId,
+                content: messageInput.trim() || '📷 Hình ảnh',
+                imageUrl,
+                isAdminReply: true,
+            });
 
             setMessageInput('');
         } catch (error) {
             console.error('Failed to send message:', error);
-        } finally {
-            setSending(false);
+            toast.error('Không thể gửi tin nhắn');
         }
     };
 
@@ -171,22 +125,25 @@ export default function Messages() {
         loadConversations();
     }, [searchTerm]);
 
-
-    // Auto-refresh every 5 seconds (only for real API)
+    // Connect to socket and listen for new messages
     useEffect(() => {
-        if (USE_MOCK_DATA) return; // Skip auto-refresh for mock data
+        if (!adminId) return;
 
-        const interval = setInterval(() => {
-            loadConversations();
-            if (selectedConversation) {
-                loadConversationDetails(selectedConversation.id);
-            }
-        }, 5000);
+        // Connect as admin
+        socketService.connect(adminId, true);
 
-        return () => clearInterval(interval);
-    }, [selectedConversation, searchTerm]);
+        // Listen for new messages
+        const handleNewMessage = (message: ChatMessage) => {
+            // Add message to Redux store
+            dispatch(addMessage(message));
+        };
 
+        socketService.onNewMessage(handleNewMessage);
 
+        return () => {
+            socketService.offNewMessage(handleNewMessage);
+        };
+    }, [adminId, dispatch]);
 
     const formatTime = (dateString: string) => {
         try {
@@ -228,9 +185,9 @@ export default function Messages() {
                             <div className="divide-y">
                                 {conversations.map((conversation) => (
                                     <div
-                                        key={conversation.id}
-                                        onClick={() => loadConversationDetails(conversation.id)}
-                                        className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${selectedConversation?.id === conversation.id ? 'bg-muted' : ''
+                                        key={conversation.conversationId}
+                                        onClick={() => loadConversationDetails(conversation.conversationId)}
+                                        className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${selectedConversation?.id === conversation.conversationId ? 'bg-muted' : ''
                                             }`}
                                     >
                                         <div className="flex items-start gap-3">
@@ -267,7 +224,6 @@ export default function Messages() {
                     </CardContent>
                 </Card>
 
-
                 {/* Message Thread */}
                 <Card className="shadow-card lg:col-span-2 flex flex-col overflow-hidden">
                     {selectedConversation ? (
@@ -301,6 +257,13 @@ export default function Messages() {
                                                 : 'bg-muted'
                                                 }`}
                                         >
+                                            {message.imageUrl && (
+                                                <img
+                                                    src={message.imageUrl}
+                                                    alt="Uploaded"
+                                                    className="rounded-lg mb-2 max-w-full h-auto"
+                                                />
+                                            )}
                                             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                                             <div className="flex items-center gap-1 mt-1">
                                                 <span className="text-xs opacity-70">{formatTime(message.createdAt)}</span>
@@ -314,9 +277,36 @@ export default function Messages() {
                                 <div ref={messagesEndRef} />
                             </CardContent>
 
-
                             <div className="border-t p-4">
+                                {imagePreview && (
+                                    <div className="mb-2 relative inline-block">
+                                        <img src={imagePreview} alt="Preview" className="h-20 rounded-lg" />
+                                        <Button
+                                            onClick={clearImage}
+                                            size="icon"
+                                            variant="destructive"
+                                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
                                 <div className="flex gap-2">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileSelect}
+                                        className="hidden"
+                                    />
+                                    <Button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        size="icon"
+                                        variant="outline"
+                                        disabled={uploading || sending}
+                                    >
+                                        <ImageIcon className="h-4 w-4" />
+                                    </Button>
                                     <Input
                                         placeholder="Nhập tin nhắn..."
                                         value={messageInput}
@@ -327,10 +317,17 @@ export default function Messages() {
                                                 handleSendMessage();
                                             }
                                         }}
-                                        disabled={sending}
+                                        disabled={sending || uploading}
                                     />
-                                    <Button onClick={handleSendMessage} disabled={sending || !messageInput.trim()}>
-                                        <Send className="h-4 w-4" />
+                                    <Button
+                                        onClick={handleSendMessage}
+                                        disabled={sending || uploading || (!messageInput.trim() && !selectedFile)}
+                                    >
+                                        {sending || uploading ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Send className="h-4 w-4" />
+                                        )}
                                     </Button>
                                 </div>
                             </div>
@@ -342,6 +339,6 @@ export default function Messages() {
                     )}
                 </Card>
             </div>
-        </div >
+        </div>
     );
 }
