@@ -30,6 +30,7 @@ import notificationReducer from './slices/notification.slice';
 import chatReducer from './slices/chat.slice';
 import { adminProductReducer } from './slices/admin/productManage.slice';
 import { adminBrandsCategorieseducer } from './slices/admin/brandCategoryManage.slice';
+import { adminOrderReducer } from './slices/admin/orderManage.slice';
 
 // Persist config
 const persistConfig = {
@@ -54,6 +55,7 @@ const rootReducer = combineReducers({
   chat: chatReducer,
   productManage: adminProductReducer,
   brandsCategoriesManage: adminBrandsCategorieseducer,
+  orderManage: adminOrderReducer,
 });
 
 // Create persisted reducer

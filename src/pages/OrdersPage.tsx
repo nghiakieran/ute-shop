@@ -534,22 +534,28 @@ const OrdersPage = () => {
                                   {order.total.toLocaleString('vi-VN')}₫
                                 </span>
                               </div>
-                              <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>Phương thức thanh toán:</span>
-                                <span>
-                                  {order.paymentMethod === 'CASH'
-                                    ? 'Tiền mặt (COD)'
-                                    : order.paymentMethod === 'CARD'
-                                    ? 'Thẻ (VNPay)'
-                                    : 'Chuyển khoản (VNPay)'}
-                                </span>
-                              </div>
+                              {(() => {
+                                let paymentMethodText = '';
+                                if (order.paymentMethod === 'CASH') {
+                                  paymentMethodText = 'Tiền mặt (COD)';
+                                } else if (order.paymentMethod === 'CARD') {
+                                  paymentMethodText = 'Thẻ (VNPay)';
+                                } else {
+                                  paymentMethodText = 'Chuyển khoản (VNPay)';
+                                }
+                                return (
+                                  <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>Phương thức thanh toán:</span>
+                                    <span>{paymentMethodText}</span>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
 
                           {/* Action Buttons */}
                           <div className="flex justify-end gap-3">
-                            {order.status === 'PENDING' && order.paymentStatus !== 'SUCCESS' && (
+                            {order.status === 'PENDING' && order.paymentStatus !== 'PAID' && (
                               <Button
                                 variant="destructive"
                                 onClick={() => handleCancelOrder(order)}
