@@ -98,3 +98,44 @@ export type OrderLineItem = {
     quantityStock: number;
   };
 };
+export type AdminBill = {
+  id: number;
+  total: number;
+  discount: number;
+  paymentMethod: 'CASH' | 'CARD' | 'BANKING';
+  status: 'PENDING' | 'CONFIRMED' | 'SHIPPING' | 'PAID' | 'COMPLETED' | 'CANCELLED';
+  billCode: string;
+  orderId: number;
+  receiverName: string;
+  receiverPhone: string;
+  shippingAddress: string;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+  customer: {
+    id: number;
+    email: string;
+    fullName: string;
+  };
+  payment: {
+    id: number;
+    paymentStatus: string;
+    paymentMethod: string;
+  };
+  items: LineItem[];
+};
+
+export interface GetAdminOrdersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}
+
+export interface GetAdminOrdersResponse {
+  data: AdminBill[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

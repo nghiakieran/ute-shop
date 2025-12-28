@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { vi } from 'date-fns/locale';
+import { formatCurrency, formatDate } from '@/utils/format.utils';
+
 import {
   Package,
   ShoppingCart,
@@ -31,22 +33,6 @@ import {
 } from 'recharts';
 import { dashboardApi } from '@/utils/dashboard.api';
 
-// --- DATA ---
-const fullYearData = [
-  { date: '2024-01', name: 'T1', revenue: 85, profit: 35, customers: 120, orders: 450 },
-  { date: '2024-02', name: 'T2', revenue: 92, profit: 38, customers: 145, orders: 480 },
-  { date: '2024-03', name: 'T3', revenue: 88, profit: 36, customers: 130, orders: 460 },
-  { date: '2024-04', name: 'T4', revenue: 105, profit: 45, customers: 160, orders: 550 },
-  { date: '2024-05', name: 'T5', revenue: 98, profit: 42, customers: 380, orders: 510 },
-  { date: '2024-06', name: 'T6', revenue: 125, profit: 58, customers: 450, orders: 620 },
-  { date: '2024-07', name: 'T7', revenue: 118, profit: 52, customers: 430, orders: 590 },
-  { date: '2024-08', name: 'T8', revenue: 135, profit: 62, customers: 500, orders: 700 },
-  { date: '2024-09', name: 'T9', revenue: 140, profit: 65, customers: 520, orders: 720 },
-  { date: '2024-10', name: 'T10', revenue: 130, profit: 58, customers: 480, orders: 680 },
-  { date: '2024-11', name: 'T11', revenue: 150, profit: 70, customers: 600, orders: 750 },
-  { date: '2024-12', name: 'T12', revenue: 160, profit: 75, customers: 650, orders: 800 },
-];
-
 const topProductsData = [
   { name: 'Áo thun basic', value: 345, fill: 'hsl(var(--primary))' },
   { name: 'Quần jean skinny', value: 289, fill: 'hsl(var(--success))' },
@@ -54,14 +40,6 @@ const topProductsData = [
   { name: 'Váy hoa midi', value: 234, fill: 'hsl(var(--accent))' },
   { name: 'Áo sơ mi', value: 198, fill: 'hsl(var(--primary-glow))' },
 ];
-
-// const bestSellers = [
-//   { name: 'Áo thun basic trắng', sold: 345, revenue: '12.5M' },
-//   { name: 'Quần jean skinny đen', sold: 289, revenue: '18.2M' },
-//   { name: 'Áo hoodie xám', sold: 267, revenue: '15.8M' },
-//   { name: 'Váy hoa midi', sold: 234, revenue: '14.3M' },
-//   { name: 'Áo sơ mi trắng', sold: 198, revenue: '9.8M' },
-// ];
 
 export default function Dashboard() {
   const today = new Date();
@@ -110,13 +88,13 @@ export default function Dashboard() {
         setStats([
           {
             title: 'Doanh thu',
-            value: `${cardRes.data.data.totalRevenue}`,
+            value: `${formatCurrency(cardRes.data.data.totalRevenue)}`,
             icon: TrendingUp,
             color: 'text-primary',
           },
           {
             title: 'Lợi nhuận',
-            value: `${cardRes.data.data.totalProfit}`,
+            value: `${formatCurrency(cardRes.data.data.totalProfit)}`,
             icon: DollarSign,
             color: 'text-success',
           },

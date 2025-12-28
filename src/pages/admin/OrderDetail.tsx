@@ -63,7 +63,7 @@ export default function OrderDetail() {
   return (
     <div className="p-8 space-y-6 animate-fade-in">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/orders')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/orders')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -128,7 +128,7 @@ export default function OrderDetail() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="pending">Chờ xử lý</SelectItem>
                   <SelectItem value="confirmed">Đã xác nhận</SelectItem>
                   <SelectItem value="shipping">Đang giao</SelectItem>
@@ -146,10 +146,9 @@ export default function OrderDetail() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="pending_payment">Chờ thanh toán</SelectItem>
                   <SelectItem value="paid">Đã thanh toán</SelectItem>
-                  <SelectItem value="refunded">Đã hoàn tiền</SelectItem>
                 </SelectContent>
               </Select>
             </div>
