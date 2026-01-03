@@ -558,15 +558,20 @@ const OrdersPage = () => {
 
                           {/* Action Buttons */}
                           <div className="flex justify-end gap-3">
-                            {order.status === 'PENDING' && order.paymentStatus !== 'PAID' && (
-                              <Button
-                                variant="destructive"
-                                onClick={() => handleCancelOrder(order)}
-                                disabled={cancellingOrderId === order.id}
-                              >
-                                {cancellingOrderId === order.id ? 'Đang hủy...' : 'Hủy Đơn Hàng'}
-                              </Button>
-                            )}
+                            {order.status === 'PENDING' &&
+                              order.paymentStatus !== 'PAID' &&
+                              !(
+                                order.paymentMethod === 'BANKING' &&
+                                order.paymentStatus === 'SUCCESS'
+                              ) && (
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => handleCancelOrder(order)}
+                                  disabled={cancellingOrderId === order.id}
+                                >
+                                  {cancellingOrderId === order.id ? 'Đang hủy...' : 'Hủy Đơn Hàng'}
+                                </Button>
+                              )}
                             {canRetryPayment(order) && (
                               <Button onClick={() => handleRetryPayment(order.billCode)}>
                                 <CreditCard className="w-4 h-4 mr-2" />
