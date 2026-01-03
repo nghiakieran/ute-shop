@@ -79,10 +79,10 @@ const WishlistPage = () => {
               className="flex items-center justify-between"
             >
               <div>
-                <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">Danh sách yêu thích</h1>
-                <p className="text-muted-foreground">
-                  {items.length} sản phẩm
-                </p>
+                <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">
+                  Danh sách yêu thích
+                </h1>
+                <p className="text-muted-foreground">{items.length} sản phẩm</p>
               </div>
               {items.length > 0 && (
                 <Button variant="outline" onClick={handleClearAll}>
@@ -116,12 +116,14 @@ const WishlistPage = () => {
               <div className="w-24 h-24 mx-auto bg-muted rounded-full flex items-center justify-center mb-6">
                 <Heart className="w-12 h-12 text-muted-foreground" />
               </div>
-              <h2 className="text-2xl font-serif font-bold mb-2">Your wishlist is empty</h2>
+              <h2 className="text-2xl font-serif font-bold mb-2">
+                Danh sách yêu thích của bạn đang trống
+              </h2>
               <p className="text-muted-foreground mb-6">
-                Save items you love to your wishlist
+                Lưu những sản phẩm bạn yêu thích để xem lại sau
               </p>
               <Link to="/products">
-                <Button>Start Shopping</Button>
+                <Button>Bắt đầu mua sắm</Button>
               </Link>
             </motion.div>
           ) : (
@@ -140,7 +142,10 @@ const WishlistPage = () => {
                     className="block relative aspect-[3/4] overflow-hidden bg-muted"
                   >
                     <img
-                      src={product.images?.[0]?.url || 'https://placehold.co/600x800/eeeeee/333333?text=No+Image'}
+                      src={
+                        product.images?.[0]?.url ||
+                        'https://placehold.co/600x800/eeeeee/333333?text=No+Image'
+                      }
                       alt={product.productName}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -177,10 +182,11 @@ const WishlistPage = () => {
                         {[...Array(5)].map((_, i) => (
                           <svg
                             key={i}
-                            className={`w-4 h-4 ${i < Math.floor(product.ratingAvg || 0)
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-gray-300'
-                              }`}
+                            className={`w-4 h-4 ${
+                              i < Math.floor(product.ratingAvg || 0)
+                                ? 'text-yellow-400 fill-current'
+                                : 'text-gray-300'
+                            }`}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -202,11 +208,20 @@ const WishlistPage = () => {
                     {/* Price */}
                     <div className="flex items-center gap-2 mb-4">
                       <span className="text-lg font-bold text-foreground">
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.unitPrice * (1 - (product.discountCampaign?.percentage || 0) / 100))}
+                        {new Intl.NumberFormat('vi-VN', {
+                          style: 'currency',
+                          currency: 'VND',
+                        }).format(
+                          product.unitPrice *
+                            (1 - (product.discountCampaign?.percentage || 0) / 100)
+                        )}
                       </span>
                       {product.discountCampaign?.percentage && (
                         <span className="text-sm text-muted-foreground line-through">
-                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.unitPrice)}
+                          {new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND',
+                          }).format(product.unitPrice)}
                         </span>
                       )}
                     </div>
@@ -267,4 +282,3 @@ const WishlistPage = () => {
 };
 
 export default WishlistPage;
-

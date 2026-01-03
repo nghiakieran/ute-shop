@@ -3,7 +3,12 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { registerUser, verifyAccount, resetError, resetRegisterState } from '@/redux/slices/auth.slice';
+import {
+  registerUser,
+  verifyAccount,
+  resetError,
+  resetRegisterState,
+} from '@/redux/slices/auth.slice';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Label } from '@/components/Label';
@@ -40,7 +45,7 @@ const RegisterPage = () => {
     needsVerification,
     registerEmail,
     registerPassword,
-    otpError
+    otpError,
   } = useAppSelector((state) => state.auth);
 
   // Redirect if already authenticated on mount
@@ -99,27 +104,27 @@ const RegisterPage = () => {
     } = {};
 
     if (!fullName) {
-      newErrors.fullName = 'Full name is required';
+      newErrors.fullName = 'Họ tên là bắt buộc';
     } else if (fullName.length < 2) {
-      newErrors.fullName = 'Full name must be at least 2 characters';
+      newErrors.fullName = 'Họ tên phải có ít nhất 2 ký tự';
     }
 
     if (!email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email là bắt buộc';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'Email không hợp lệ';
     }
 
     if (!password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Mật khẩu là bắt buộc';
     } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
 
     if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
+      newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
     }
 
     setErrors(newErrors);
@@ -140,15 +145,17 @@ const RegisterPage = () => {
   const handleVerifyOtp = async (otp: string) => {
     if (registerEmail && registerPassword && fullName) {
       try {
-        await dispatch(verifyAccount({ email: registerEmail, password: registerPassword, fullName, otp })).unwrap();
-        
+        await dispatch(
+          verifyAccount({ email: registerEmail, password: registerPassword, fullName, otp })
+        ).unwrap();
+
         // Verification successful
         toast({
           variant: 'success',
           title: 'Đăng ký thành công',
           description: 'Chào mừng bạn đến với UTE Shop!',
         });
-        
+
         // Redirect after short delay
         setTimeout(() => {
           navigate(redirectPath, { replace: true });
@@ -161,7 +168,14 @@ const RegisterPage = () => {
 
   const handleResendOtp = () => {
     if (registerEmail && fullName) {
-      dispatch(registerUser({ fullName, email: registerEmail, password: registerPassword!, confirmPassword: registerPassword! }));
+      dispatch(
+        registerUser({
+          fullName,
+          email: registerEmail,
+          password: registerPassword!,
+          confirmPassword: registerPassword!,
+        })
+      );
       setCountdown(60);
       setCanResend(false);
       toast({
@@ -181,10 +195,8 @@ const RegisterPage = () => {
           className="w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl space-y-6"
         >
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold">Verify Your Email</h2>
-            <p className="text-gray-600">
-              We've sent a verification code to
-            </p>
+            <h2 className="text-3xl font-bold">Xác thực Email của bạn</h2>
+            <p className="text-gray-600">Chúng tôi đã gửi mã xác thực đến</p>
             <p className="font-medium text-gray-900">{registerEmail}</p>
           </div>
 
@@ -205,12 +217,10 @@ const RegisterPage = () => {
                 disabled={loading}
                 className="text-sm text-primary hover:underline disabled:opacity-50"
               >
-                Resend OTP
+                Gửi lại OTP
               </button>
             ) : (
-              <p className="text-sm text-gray-500">
-                Resend OTP in {countdown}s
-              </p>
+              <p className="text-sm text-gray-500">Gửi lại OTP sau {countdown}s</p>
             )}
           </div>
 
@@ -222,22 +232,22 @@ const RegisterPage = () => {
               } else {
                 toast({
                   variant: 'destructive',
-                  title: 'Invalid OTP',
-                  description: 'Please enter all 6 digits',
+                  title: 'OTP không hợp lệ',
+                  description: 'Vui lòng nhập đầy đủ 6 chữ số',
                 });
               }
             }}
             disabled={loading}
             className="w-full"
           >
-            {loading ? 'Verifying...' : 'Verify OTP'}
+            {loading ? 'Đang xác thực...' : 'Xác thực OTP'}
           </Button>
 
           <button
             onClick={() => dispatch(resetRegisterState())}
             className="w-full text-sm text-gray-500 hover:text-gray-900"
           >
-            Back to registration
+            Quay lại đăng ký
           </button>
         </motion.div>
       </div>
@@ -264,7 +274,7 @@ const RegisterPage = () => {
             transition={{ delay: 0.2, duration: 0.8 }}
             className="text-6xl font-serif font-bold tracking-[0.2em]"
           >
-            ATELIER
+            UTE SHOP
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -272,7 +282,7 @@ const RegisterPage = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-xl font-light max-w-md mx-auto leading-relaxed"
           >
-            Join our community of fashion enthusiasts
+            Tham gia cộng đồng những người đam mê thời trang
           </motion.p>
         </div>
       </motion.div>
@@ -290,23 +300,23 @@ const RegisterPage = () => {
             className="inline-flex items-center text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to home
+            Quay lại trang chủ
           </Link>
 
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold">Create account</h1>
-            <p className="text-neutral-500">Join us and discover timeless fashion</p>
+            <h1 className="text-4xl font-bold">Tạo tài khoản</h1>
+            <p className="text-neutral-500">Tham gia và khám phá thời trang đẳng cấp</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">Họ và tên</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder="Nguyễn Văn A"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="pl-10"
@@ -324,7 +334,7 @@ const RegisterPage = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@example.com"
+                  placeholder="ten@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
@@ -336,13 +346,13 @@ const RegisterPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mật khẩu</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Create a password"
+                  placeholder="Tạo mật khẩu"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
@@ -350,19 +360,17 @@ const RegisterPage = () => {
                   autoComplete="new-password"
                 />
               </div>
-              {errors.password && (
-                <p className="text-sm text-red-600">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
                 <Input
                   id="confirmPassword"
                   type="password"
-                  placeholder="Confirm your password"
+                  placeholder="Xác nhận mật khẩu của bạn"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pl-10"
@@ -376,13 +384,13 @@ const RegisterPage = () => {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
             </Button>
 
             <p className="text-center text-sm text-neutral-500">
-              Already have an account?{' '}
+              Đã có tài khoản?{' '}
               <Link to="/login" className="text-neutral-900 hover:underline font-medium">
-                Sign in
+                Đăng nhập
               </Link>
             </p>
           </form>

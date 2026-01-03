@@ -7,10 +7,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import {
-  fetchCategories,
-  selectCategories,
-} from '@/redux/slices/product.slice';
+import { fetchCategories, selectCategories } from '@/redux/slices/product.slice';
 import { addToCart } from '@/redux/slices/cart.slice';
 import { ProductCard, Button, Loading } from '@/components';
 import { useDebounce } from '@/hooks';
@@ -132,12 +129,12 @@ const ProductsPage = () => {
         }
       );
     } catch (error: any) {
-      toast.error(error || 'Failed to add to cart');
+      toast.error(error || 'Không thể thêm vào giỏ hàng');
     }
   };
 
   const handleAddToWishlist = (product: any) => {
-    toast.success(`${product.productName} added to wishlist`);
+    toast.success(`Đã thêm ${product.productName} vào danh sách yêu thích`);
   };
 
   const handleClearFilters = () => {
@@ -163,9 +160,12 @@ const ProductsPage = () => {
               animate={{ opacity: 1, y: 0 }}
               className="text-center"
             >
-              <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">Our Collection</h1>
+              <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
+                Bộ sưu tập của chúng tôi
+              </h1>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Discover timeless pieces crafted with European elegance and modern minimalism
+                Khám phá những sản phẩm vượt thời gian được chế tác với phong cách Châu Âu thanh
+                lịch và tối giản hiện đại
               </p>
             </motion.div>
           </div>
@@ -181,7 +181,7 @@ const ProductsPage = () => {
                 className="w-full"
               >
                 <Filter className="w-4 h-4 mr-2" />
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
+                {showFilters ? 'Ẩn bộ lọc' : 'Hiển bộ lọc'}
               </Button>
             </div>
 
@@ -189,16 +189,17 @@ const ProductsPage = () => {
             <motion.aside
               initial={false}
               animate={{ height: showFilters ? 'auto' : 0 }}
-              className={`lg:w-64 lg:flex-shrink-0 overflow-hidden lg:overflow-visible ${showFilters ? 'block' : 'hidden lg:block'
-                }`}
+              className={`lg:w-64 lg:flex-shrink-0 overflow-hidden lg:overflow-visible ${
+                showFilters ? 'block' : 'hidden lg:block'
+              }`}
             >
               <div className="space-y-6 lg:sticky lg:top-24">
                 {/* Search */}
                 <div>
-                  <h3 className="text-lg font-medium mb-4">Search</h3>
+                  <h3 className="text-lg font-medium mb-4">Tìm kiếm</h3>
                   <input
                     type="text"
-                    placeholder="Search products..."
+                    placeholder="Tìm kiếm sản phẩm..."
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
@@ -210,19 +211,18 @@ const ProductsPage = () => {
 
                 {/* Categories */}
                 <div>
-                  <h3 className="text-lg font-medium mb-4">Categories</h3>
+                  <h3 className="text-lg font-medium mb-4">Danh mục</h3>
                   <div className="space-y-2">
                     <button
                       onClick={() => {
                         setSelectedCategory(undefined);
                         setPagination({ ...pagination, page: 1 });
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-md transition-colors ${!selectedCategory
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-accent'
-                        }`}
+                      className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                        !selectedCategory ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
+                      }`}
                     >
-                      All Products
+                      Tất cả sản phẩm
                     </button>
                     {categories.map((category) => (
                       <button
@@ -231,10 +231,11 @@ const ProductsPage = () => {
                           setSelectedCategory(Number(category.id));
                           setPagination({ ...pagination, page: 1 });
                         }}
-                        className={`w-full text-left px-3 py-2 rounded-md transition-colors ${selectedCategory === Number(category.id)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-accent'
-                          }`}
+                        className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                          selectedCategory === Number(category.id)
+                            ? 'bg-primary text-primary-foreground'
+                            : 'hover:bg-accent'
+                        }`}
                       >
                         {category.name}
                       </button>
@@ -244,7 +245,7 @@ const ProductsPage = () => {
 
                 {/* Price Range */}
                 <div>
-                  <h3 className="text-lg font-medium mb-4">Price Range</h3>
+                  <h3 className="text-lg font-medium mb-4">Khoảng giá</h3>
                   <div className="space-y-4">
                     <input
                       type="range"
@@ -267,13 +268,9 @@ const ProductsPage = () => {
 
                 {/* Clear Filters */}
                 {(selectedCategory || priceRange[1] !== 50000000 || searchQuery) && (
-                  <Button
-                    variant="outline"
-                    onClick={handleClearFilters}
-                    className="w-full"
-                  >
+                  <Button variant="outline" onClick={handleClearFilters} className="w-full">
                     <X className="w-4 h-4 mr-2" />
-                    Clear Filters
+                    Xóa bộ lọc
                   </Button>
                 )}
               </div>
@@ -284,11 +281,11 @@ const ProductsPage = () => {
               {/* Sort and Results Count */}
               <div className="flex items-center justify-between mb-6">
                 <p className="text-muted-foreground">
-                  {pagination.total} {pagination.total === 1 ? 'product' : 'products'}
+                  {pagination.total} {pagination.total === 1 ? 'sản phẩm' : 'sản phẩm'}
                 </p>
                 <div className="flex items-center gap-2">
                   <label htmlFor="sort" className="text-sm text-muted-foreground">
-                    Sort by:
+                    Sắp xếp:
                   </label>
                   <select
                     id="sort"
@@ -299,11 +296,11 @@ const ProductsPage = () => {
                     }}
                     className="border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    <option value="newest">Most Viewed</option>
-                    <option value="price_asc">Price: Low to High</option>
-                    <option value="price_desc">Price: High to Low</option>
-                    <option value="rating">Highest Rated</option>
-                    <option value="name">Name A-Z</option>
+                    <option value="newest">Xem nhiều nhất</option>
+                    <option value="price_asc">Giá: Thấp đến cao</option>
+                    <option value="price_desc">Giá: Cao đến thấp</option>
+                    <option value="rating">Đánh giá cao nhất</option>
+                    <option value="name">Tên A-Z</option>
                   </select>
                 </div>
               </div>
@@ -334,7 +331,7 @@ const ProductsPage = () => {
                         disabled={pagination.page === 1}
                       >
                         <ChevronLeft className="w-4 h-4" />
-                        Previous
+                        Trang trước
                       </Button>
 
                       <div className="flex items-center gap-2">
@@ -372,7 +369,7 @@ const ProductsPage = () => {
                         onClick={() => handlePageChange(pagination.page + 1)}
                         disabled={pagination.page === pagination.totalPages}
                       >
-                        Next
+                        Trang sau
                         <ChevronRight className="w-4 h-4" />
                       </Button>
                     </div>
@@ -380,9 +377,9 @@ const ProductsPage = () => {
                 </>
               ) : (
                 <div className="text-center py-16">
-                  <p className="text-muted-foreground text-lg mb-4">No products found</p>
+                  <p className="text-muted-foreground text-lg mb-4">Không tìm thấy sản phẩm</p>
                   <Button variant="outline" onClick={handleClearFilters}>
-                    Clear Filters
+                    Xóa bộ lọc
                   </Button>
                 </div>
               )}
@@ -395,4 +392,3 @@ const ProductsPage = () => {
 };
 
 export default ProductsPage;
-

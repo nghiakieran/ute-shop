@@ -125,7 +125,7 @@ const ProfilePage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6"
                 >
-                  Profile updated successfully!
+                  Cập nhật hồ sơ thành công!
                 </motion.div>
               )}
 
@@ -135,7 +135,7 @@ const ProfilePage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6"
                 >
-                  Avatar uploaded successfully!
+                  Tải ảnh đại diện thành công!
                 </motion.div>
               )}
 
@@ -151,13 +151,13 @@ const ProfilePage = () => {
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name *</Label>
+                  <Label htmlFor="fullName">Họ và tên *</Label>
                   <Input
                     id="fullName"
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    placeholder="John Doe"
+                    placeholder="Nguyễn Văn A"
                     required
                   />
                 </div>
@@ -176,18 +176,18 @@ const ProfilePage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">Số điện thoại</Label>
                   <Input
                     id="phone"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="+1234567890"
+                    placeholder="0912345678"
                   />
                 </div>
 
                 <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? 'Updating...' : 'Update Profile'}
+                  {loading ? 'Đang cập nhật...' : 'Cập nhật hồ sơ'}
                 </Button>
               </form>
             </motion.div>

@@ -82,7 +82,7 @@ const ProductDetailPage = () => {
 
     // Check if user is authenticated
     if (!isAuthenticated) {
-      toast.error('Please login to add items to your cart');
+      toast.error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
       // Save current location to redirect back after login
       const currentPath = window.location.pathname;
       navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
@@ -91,13 +91,13 @@ const ProductDetailPage = () => {
 
     // Check if product is out of stock
     if (product.quantityStock === 0) {
-      toast.error('This product is currently out of stock');
+      toast.error('Sản phẩm này hiện đang hết hàng');
       return;
     }
 
     // Check if requested quantity exceeds available stock
     if (quantity > product.quantityStock) {
-      toast.error(`Only ${product.quantityStock} items available`);
+      toast.error(`Chỉ còn ${product.quantityStock} sản phẩm`);
       return;
     }
 
@@ -150,7 +150,7 @@ const ProductDetailPage = () => {
 
     // Check if user is authenticated
     if (!isAuthenticated) {
-      toast.error('Please login to purchase items');
+      toast.error('Vui lòng đăng nhập để mua hàng');
       // Save current location to redirect back after login
       const currentPath = window.location.pathname;
       navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
@@ -159,13 +159,13 @@ const ProductDetailPage = () => {
 
     // Check if product is out of stock
     if (product.quantityStock === 0) {
-      toast.error('This product is currently out of stock');
+      toast.error('Sản phẩm này hiện đang hết hàng');
       return;
     }
 
     // Check if requested quantity exceeds available stock
     if (quantity > product.quantityStock) {
-      toast.error(`Only ${product.quantityStock} items available`);
+      toast.error(`Chỉ còn ${product.quantityStock} sản phẩm`);
       return;
     }
 
@@ -177,11 +177,11 @@ const ProductDetailPage = () => {
         })
       ).unwrap();
 
-      toast.success('Redirecting to cart...');
+      toast.success('Đang chuyển đến giỏ hàng...');
 
       navigate('/cart');
     } catch (error: any) {
-      toast.error(error || 'Failed to add to cart. Please try again later', {
+      toast.error(error || 'Không thể thêm vào giỏ hàng. Vui lòng thử lại sau', {
         duration: 4000,
         position: 'bottom-right',
       });
@@ -196,8 +196,8 @@ const ProductDetailPage = () => {
     return (
       <MainLayout>
         <div className="container-custom py-16 text-center">
-          <h2 className="text-2xl font-bold mb-4">Product not found</h2>
-          <Button onClick={() => navigate('/products')}>Browse Products</Button>
+          <h2 className="text-2xl font-bold mb-4">Không tìm thấy sản phẩm</h2>
+          <Button onClick={() => navigate('/products')}>Xem sản phẩm</Button>
         </div>
       </MainLayout>
     );
@@ -216,18 +216,18 @@ const ProductDetailPage = () => {
         <div className="container-custom py-6">
           <nav className="flex items-center gap-2 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-foreground transition-colors">
-              Home
+              Trang chủ
             </Link>
             <span>/</span>
             <Link to="/products" className="hover:text-foreground transition-colors">
-              Products
+              Sản phẩm
             </Link>
             <span>/</span>
             <Link
               to={`/products?category=${product.category?.id}`}
               className="hover:text-foreground transition-colors"
             >
-              {product.category?.categoryName || 'Category'}
+              {product.category?.categoryName || 'Danh mục'}
             </Link>
             <span>/</span>
             <span className="text-foreground">{product.productName}</span>
@@ -238,7 +238,7 @@ const ProductDetailPage = () => {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mt-4"
           >
             <ChevronLeft className="w-4 h-4" />
-            Back
+            Quay lại
           </button>
         </div>
 
@@ -349,10 +349,11 @@ const ProductDetailPage = () => {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-5 h-5 ${i < Math.floor(product.ratingAvg || 0)
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-gray-300'
-                          }`}
+                        className={`w-5 h-5 ${
+                          i < Math.floor(product.ratingAvg || 0)
+                            ? 'text-yellow-400 fill-current'
+                            : 'text-gray-300'
+                        }`}
                       />
                     ))}
                   </div>
@@ -377,17 +378,18 @@ const ProductDetailPage = () => {
               {/* Stock Status */}
               <div className="flex items-center gap-4">
                 <span
-                  className={`text-sm font-medium ${!isOutOfStock ? 'text-green-600' : 'text-red-600'
-                    }`}
+                  className={`text-sm font-medium ${
+                    !isOutOfStock ? 'text-green-600' : 'text-red-600'
+                  }`}
                 >
-                  {!isOutOfStock ? `In Stock (${product.quantityStock} available)` : 'Out of Stock'}
+                  {!isOutOfStock ? `Còn hàng (${product.quantityStock} có sẵn)` : 'Hết hàng'}
                 </span>
               </div>
 
               {/* Description */}
               {product.description && (
                 <div>
-                  <h3 className="text-sm font-medium mb-3">Description</h3>
+                  <h3 className="text-sm font-medium mb-3">Mô tả</h3>
                   <p className="text-muted-foreground leading-relaxed">{product.description}</p>
                 </div>
               )}
@@ -395,7 +397,7 @@ const ProductDetailPage = () => {
               {/* Quantity */}
               {!isOutOfStock && (
                 <div>
-                  <h3 className="text-sm font-medium mb-3">Quantity</h3>
+                  <h3 className="text-sm font-medium mb-3">Số lượng</h3>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -425,10 +427,10 @@ const ProductDetailPage = () => {
                   disabled={isOutOfStock}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
-                  {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                  {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
                 </Button>
                 <Button onClick={handleBuyNow} className="flex-1" disabled={isOutOfStock}>
-                  {isOutOfStock ? 'Out of Stock' : 'Buy Now'}
+                  {isOutOfStock ? 'Hết hàng' : 'Mua ngay'}
                 </Button>
                 <Button variant="outline" size="default" className="px-4">
                   <Heart className="w-5 h-5" />
@@ -440,14 +442,14 @@ const ProductDetailPage = () => {
                 <div className="flex items-start gap-3">
                   <Truck className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium">Free Shipping</p>
-                    <p className="text-sm text-muted-foreground">On orders over 1.000.000₫</p>
+                    <p className="font-medium">Miễn phí vận chuyển</p>
+                    <p className="text-sm text-muted-foreground">Đơn hàng trên 1.000.000₫</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium">Secure Payment</p>
+                    <p className="font-medium">Thanh toán an toàn</p>
                     <p className="text-sm text-muted-foreground">100% secure payment</p>
                   </div>
                 </div>
@@ -479,10 +481,11 @@ const ProductDetailPage = () => {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`w-5 h-5 ${star <= Math.round(reviewStats.averageRating)
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300'
-                              }`}
+                            className={`w-5 h-5 ${
+                              star <= Math.round(reviewStats.averageRating)
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
                           />
                         ))}
                       </div>
@@ -498,19 +501,20 @@ const ProductDetailPage = () => {
                             <div
                               className="bg-yellow-400 h-2 rounded-full"
                               style={{
-                                width: `${(reviewStats.ratingDistribution[
-                                  rating as keyof typeof reviewStats.ratingDistribution
-                                ] /
-                                  reviewStats.totalReviews) *
+                                width: `${
+                                  (reviewStats.ratingDistribution[
+                                    rating as keyof typeof reviewStats.ratingDistribution
+                                  ] /
+                                    reviewStats.totalReviews) *
                                   100
-                                  }%`,
+                                }%`,
                               }}
                             />
                           </div>
                           <span className="text-sm text-muted-foreground w-12">
                             {
                               reviewStats.ratingDistribution[
-                              rating as keyof typeof reviewStats.ratingDistribution
+                                rating as keyof typeof reviewStats.ratingDistribution
                               ]
                             }
                           </span>

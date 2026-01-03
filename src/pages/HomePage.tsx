@@ -41,7 +41,6 @@ interface ProductApi {
 
 type ProductCategory = any;
 
-
 const HomePage = () => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
@@ -61,7 +60,6 @@ const HomePage = () => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
-
   const handleAddToCart = (product: ProductApi) => {
     // 🚨 QUAN TRỌNG: API danh sách sản phẩm không trả về `sizes` và `colors`.
     // Logic "Quick Add" (thêm nhanh) không thể thực hiện được.
@@ -72,7 +70,7 @@ const HomePage = () => {
     // const defaultColor =
     //   product.colors.find((c: ProductColor) => c.available) ||
     //   product.colors[0];
-    
+
     // if (!defaultSize || !defaultColor) { ... }
 
     // Logic cũ đã bị xóa vì `product.sizes` không tồn tại.
@@ -91,10 +89,11 @@ const HomePage = () => {
     // );
   };
 
-  const handleAddToWishlist = (product: ProductApi) => { // Sửa kiểu: Product -> ProductApi
+  const handleAddToWishlist = (product: ProductApi) => {
+    // Sửa kiểu: Product -> ProductApi
     toast({
-      title: 'Added to wishlist',
-      description: `${product.productName} has been added to your wishlist`, // Sửa: name -> productName
+      title: 'Đã thêm vào danh sách yêu thích',
+      description: `${product.productName} đã được thêm vào danh sách yêu thích của bạn`, // Sửa: name -> productName
     });
   };
 
@@ -117,7 +116,7 @@ const HomePage = () => {
             transition={{ delay: 0.2, duration: 0.8 }}
             className="font-serif text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight"
           >
-            Timeless European Fashion
+            Thời trang Châu Âu vượt thời gian
           </motion.h1>
 
           <motion.p
@@ -126,7 +125,7 @@ const HomePage = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-xl md:text-2xl text-white/90 mb-10 font-light"
           >
-            Discover minimalist elegance with our curated collection
+            Khám phá sự thanh lịch tối giản với bộ sưu tập tinh té của chúng tôi
           </motion.p>
 
           <motion.div
@@ -136,7 +135,7 @@ const HomePage = () => {
           >
             <Link to="/products">
               <Button size="lg" className="text-lg px-8">
-                Shop Collection
+                Xem bộ sưu tập
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
@@ -154,44 +153,49 @@ const HomePage = () => {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-              Shop by Category
+              Mua sắm theo danh mục
             </h2>
             <p className="text-muted-foreground text-lg">
-              Explore our curated collections
+              Khám phá các bộ sưu tập tinh té của chúng tôi
             </p>
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {categories.map((category: any, index: number) => ( // Dùng 'any' nếu chưa có kiểu
-              <motion.div
-                key={category.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Link
-                  to={`/products?category=${category.slug}`} // Mock data có 'slug', API thật có thể không
-                  className="group block relative aspect-[3/4] rounded-lg overflow-hidden"
+            {categories.map(
+              (
+                category: any,
+                index: number // Dùng 'any' nếu chưa có kiểu
+              ) => (
+                <motion.div
+                  key={category.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  <img
-                    src={category.image} // Mock data có 'image'
-                    alt={category.name} // Mock data có 'name'
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <h3 className="text-white text-xl font-serif font-bold mb-1">
-                      {category.name}
-                    </h3>
-                    <p className="text-white/80 text-sm flex items-center">
-                      Shop now
-                      <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                    </p>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  <Link
+                    to={`/products?category=${category.slug}`} // Mock data có 'slug', API thật có thể không
+                    className="group block relative aspect-[3/4] rounded-lg overflow-hidden"
+                  >
+                    <img
+                      src={category.image} // Mock data có 'image'
+                      alt={category.name} // Mock data có 'name'
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6">
+                      <h3 className="text-white text-xl font-serif font-bold mb-1">
+                        {category.name}
+                      </h3>
+                      <p className="text-white/80 text-sm flex items-center">
+                        Mua ngay
+                        <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
+              )
+            )}
           </div>
         </div>
       </section>
@@ -205,12 +209,8 @@ const HomePage = () => {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-              Best Selling Products
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              Our top-selling, customer favorites
-            </p>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Sản phẩm bán chạy</h2>
+            <p className="text-muted-foreground text-lg">Sản phẩm yêu thích nhất của khách hàng</p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -228,7 +228,7 @@ const HomePage = () => {
             <div className="text-center mt-12">
               <Link to="/products">
                 <Button variant="outline" size="lg">
-                  View All Products
+                  Xem tất cả sản phẩm
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
@@ -249,11 +249,9 @@ const HomePage = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-                Newest Products
-              </h2>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Sản phẩm mới nhất</h2>
               <p className="text-muted-foreground text-lg">
-                Fresh picks, just for you
+                Những lựa chọn mới, dành riêng cho bạn
               </p>
             </motion.div>
 
@@ -282,12 +280,8 @@ const HomePage = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-                Most Viewed Products
-              </h2>
-              <p className="text-muted-foreground text-lg">
-                What everyone is looking at right now
-              </p>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Sản phẩm xem nhiều</h2>
+              <p className="text-muted-foreground text-lg">Những sản phẩm mọi người đang xem</p>
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -315,10 +309,10 @@ const HomePage = () => {
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-                Top Discount Products
+                Sản phẩm giảm giá hấp dẫn
               </h2>
               <p className="text-muted-foreground text-lg">
-                Hurry up! Best deals for you
+                Nhanh tay! Những ưu đãi tốt nhất cho bạn
               </p>
             </motion.div>
 
@@ -346,23 +340,22 @@ const HomePage = () => {
             className="text-center max-w-3xl mx-auto"
           >
             <h2 className="text-3xl md:text-5xl font-serif font-bold mb-6">
-              Join Our Fashion Community
+              Tham gia cộng đồng thời trang của chúng tôi
             </h2>
             <p className="text-xl text-primary-foreground/80 mb-8">
-              Get exclusive access to new arrivals, special offers, and fashion
-              inspiration
+              Nhận quyền truy cập đặc biệt vào hàng mới về, ưu đãi đặc biệt và cảm hứng thời trang
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Nhập email của bạn"
                 className="px-6 py-3 rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[300px]"
               />
               <Button
                 size="lg"
                 className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
               >
-                Subscribe
+                Đăng ký
               </Button>
             </div>
           </motion.div>

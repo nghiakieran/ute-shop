@@ -100,18 +100,18 @@ const CheckoutPage = () => {
               <Home className="w-10 h-10 text-accent-foreground" />
             </div>
             <div>
-              <h2 className="text-3xl font-serif font-bold mb-2">Your cart is empty</h2>
+              <h2 className="text-3xl font-serif font-bold mb-2">Giỏ hàng của bạn đang trống</h2>
               <p className="text-muted-foreground">
-                Add some items to your cart before heading to checkout.
+                Thêm sản phẩm vào giỏ hàng trước khi thanh toán.
               </p>
             </div>
             <div className="space-y-3">
               <Link to="/products">
-                <Button className="w-full">Browse Products</Button>
+                <Button className="w-full">Xem sản phẩm</Button>
               </Link>
               <Link to="/cart">
                 <Button variant="outline" className="w-full">
-                  Go to Cart
+                  Về giỏ hàng
                 </Button>
               </Link>
             </div>
@@ -217,15 +217,15 @@ const CheckoutPage = () => {
                     className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to Cart
+                    Quay lại giỏ hàng
                   </Link>
                 </p>
-                <h1 className="text-3xl md:text-4xl font-serif font-bold">Checkout</h1>
-                <p className="text-muted-foreground">Complete your purchase securely</p>
+                <h1 className="text-3xl md:text-4xl font-serif font-bold">Thanh toán</h1>
+                <p className="text-muted-foreground">Hoàn tất đơn hàng một cách an toàn</p>
               </div>
               <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Secure payment powered by UTEShop</span>
+                <span>Thanh toán an toàn được cung cấp bởi UTEShop</span>
               </div>
             </motion.div>
           </div>
@@ -244,8 +244,10 @@ const CheckoutPage = () => {
                 <div className="p-6 border-b border-border flex items-center gap-3">
                   <Truck className="w-5 h-5 text-primary" />
                   <div>
-                    <h2 className="text-lg font-semibold">Shipping Information</h2>
-                    <p className="text-sm text-muted-foreground">Provide your delivery details</p>
+                    <h2 className="text-lg font-semibold">Thông tin giao hàng</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Cung cấp địa chỉ giao hàng của bạn
+                    </p>
                   </div>
                 </div>
                 <div className="p-6 space-y-6">
@@ -278,20 +280,20 @@ const CheckoutPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="address">Street Address *</Label>
+                    <Label htmlFor="address">Địa chỉ *</Label>
                     <Input
                       id="address"
                       name="address"
                       value={shippingInfo.address}
                       onChange={handleShippingChange}
                       required
-                      placeholder="123 Fashion Ave"
+                      placeholder="123 Đường Nguyễn Văn Bảo"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="city">City/Province *</Label>
+                      <Label htmlFor="city">Tỉnh/Thành phố *</Label>
                       <select
                         id="city"
                         name="city"
@@ -309,7 +311,7 @@ const CheckoutPage = () => {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="district">District *</Label>
+                      <Label htmlFor="district">Quận/Huyện *</Label>
                       <select
                         id="district"
                         name="district"
@@ -328,7 +330,7 @@ const CheckoutPage = () => {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="ward">Ward *</Label>
+                      <Label htmlFor="ward">Phường/Xã *</Label>
                       <select
                         id="ward"
                         name="ward"
@@ -349,13 +351,13 @@ const CheckoutPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="notes">Order Notes (Optional)</Label>
+                    <Label htmlFor="notes">Ghi chú đơn hàng (Tùy chọn)</Label>
                     <textarea
                       id="notes"
                       name="note"
                       value={note}
                       onChange={handleShippingChange}
-                      placeholder="Special delivery instructions, leave at the front desk, etc."
+                      placeholder="Hướng dẫn giao hàng đặc biệt, để lại ở quầy lễ tân, v.v."
                       className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     />
                   </div>
@@ -371,8 +373,8 @@ const CheckoutPage = () => {
                 <div className="p-6 border-b border-border flex items-center gap-3">
                   <CreditCard className="w-5 h-5 text-primary" />
                   <div>
-                    <h2 className="text-lg font-semibold">Payment Method</h2>
-                    <p className="text-sm text-muted-foreground">Choose how you want to pay</p>
+                    <h2 className="text-lg font-semibold">Phương thức thanh toán</h2>
+                    <p className="text-sm text-muted-foreground">Chọn cách bạn muốn thanh toán</p>
                   </div>
                 </div>
                 <div className="p-6 space-y-6">
@@ -385,7 +387,7 @@ const CheckoutPage = () => {
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">Cash on Delivery</span>
+                        <span className="font-medium">Thanh toán khi nhận hàng</span>
                         <input
                           type="radio"
                           name="paymentMethod"
@@ -396,7 +398,7 @@ const CheckoutPage = () => {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Pay with cash when your order arrives
+                        Thanh toán bằng tiền mặt khi nhận hàng
                       </p>
                     </label>
 
@@ -408,7 +410,7 @@ const CheckoutPage = () => {
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">Bank Transfer</span>
+                        <span className="font-medium">Chuyển khoản ngân hàng</span>
                         <input
                           type="radio"
                           name="paymentMethod"
@@ -419,7 +421,7 @@ const CheckoutPage = () => {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Transfer directly to our bank account
+                        Chuyển khoản trực tiếp vào tài khoản ngân hàng của chúng tôi
                       </p>
                     </label>
                   </div>
@@ -436,9 +438,9 @@ const CheckoutPage = () => {
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-primary" />
                 <div>
-                  <h2 className="text-lg font-semibold">Order Summary</h2>
+                  <h2 className="text-lg font-semibold">Tóm tắt đơn hàng</h2>
                   <p className="text-xs text-muted-foreground">
-                    Review your items before placing the order
+                    Xem lại sản phẩm trước khi đặt hàng
                   </p>
                 </div>
               </div>
@@ -469,26 +471,26 @@ const CheckoutPage = () => {
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Subtotal</span>
+                    <span>Tạm tính</span>
                     <span className="font-medium">
                       {checkoutData.subtotal.toLocaleString('vi-VN')}₫
                     </span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Shipping</span>
+                    <span>Phí vận chuyển</span>
                     <span className="font-medium">
                       {checkoutData.shipping === 0
-                        ? 'FREE'
+                        ? 'MIỄN PHÍ'
                         : `${checkoutData.shipping.toLocaleString('vi-VN')}₫`}
                     </span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Tax (10%)</span>
+                    <span>Thuế (10%)</span>
                     <span className="font-medium">{checkoutData.tax.toLocaleString('vi-VN')}₫</span>
                   </div>
                   {checkoutData.discount > 0 && (
                     <div className="flex justify-between text-destructive">
-                      <span>Discount</span>
+                      <span>Giảm giá</span>
                       <span className="font-medium">
                         -{checkoutData.discount.toLocaleString('vi-VN')}₫
                       </span>
@@ -497,24 +499,24 @@ const CheckoutPage = () => {
                 </div>
 
                 <div className="border-t border-border pt-3 flex justify-between text-lg">
-                  <span className="font-bold">Total</span>
+                  <span className="font-bold">Tổng cộng</span>
                   <span className="font-bold">{checkoutData.total.toLocaleString('vi-VN')}₫</span>
                 </div>
 
                 <div className="bg-accent/30 text-accent-foreground rounded-lg p-3 text-xs flex gap-2 items-start">
                   <ShieldCheck className="w-4 h-4 mt-0.5" />
-                  <span>Your payment is secured with encryption and 24/7 fraud monitoring.</span>
+                  <span>Thanh toán của bạn được bảo mật với mã hóa và giám sát gian lận 24/7.</span>
                 </div>
               </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={isPlacingOrder}>
-                {isPlacingOrder ? 'Processing...' : 'Place Order'}
+                {isPlacingOrder ? 'Đang xử lý...' : 'Đặt hàng'}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center">
-                By placing this order, you agree to our{' '}
-                <span className="underline">Terms & Conditions</span> and{' '}
-                <span className="underline">Privacy Policy</span>.
+                Bằng cách đặt hàng, bạn đồng ý với{' '}
+                <span className="underline">Điều khoản & Điều kiện</span> và{' '}
+                <span className="underline">Chính sách bảo mật</span> của chúng tôi.
               </p>
             </motion.aside>
           </div>
