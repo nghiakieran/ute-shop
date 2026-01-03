@@ -60,19 +60,19 @@ export const Navbar = () => {
               to="/"
               className="text-foreground/70 hover:text-foreground transition-colors font-medium"
             >
-              Home
+              Trang chủ
             </Link>
             <Link
               to="/products"
               className="text-foreground/70 hover:text-foreground transition-colors font-medium"
             >
-              Products
+              Sản phẩm
             </Link>
             <Link
               to="/about"
               className="text-foreground/70 hover:text-foreground transition-colors font-medium"
             >
-              About
+              Giới thiệu
             </Link>
           </div>
 
@@ -124,13 +124,13 @@ export const Navbar = () => {
                     to="/profile"
                     className="block px-4 py-3 text-sm text-foreground hover:bg-accent"
                   >
-                    Profile
+                    Hồ sơ
                   </Link>
                   <Link
                     to="/orders"
                     className="block px-4 py-3 text-sm text-foreground hover:bg-accent"
                   >
-                    Orders
+                    Đơn hàng
                   </Link>
                   <Link
                     to="/reviews"
@@ -154,7 +154,7 @@ export const Navbar = () => {
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-3 text-sm text-destructive hover:bg-accent"
                   >
-                    Logout
+                    Đăng xuất
                   </button>
                 </div>
               </div>
@@ -163,7 +163,7 @@ export const Navbar = () => {
                 to="/login"
                 className="px-6 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium"
               >
-                Sign In
+                Đăng nhập
               </Link>
             )}
           </div>
@@ -203,10 +203,10 @@ export const Navbar = () => {
           >
             <div className="flex flex-col space-y-4">
               <Link to="/" className="text-foreground hover:text-primary font-medium">
-                Home
+                Trang chủ
               </Link>
               <Link to="/products" className="text-foreground hover:text-primary font-medium">
-                Products
+                Sản phẩm
               </Link>
               {isAuthenticated && (
                 <div className="flex items-center justify-between  text-foreground hover:text-primary font-medium">
@@ -217,7 +217,7 @@ export const Navbar = () => {
                 to="/wishlist"
                 className="text-foreground hover:text-primary font-medium flex items-center justify-between"
               >
-                <span>Wishlist</span>
+                <span>Danh sách yêu thích</span>
                 {wishlistItemCount > 0 && (
                   <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {wishlistItemCount}
@@ -228,7 +228,7 @@ export const Navbar = () => {
                 to="/cart"
                 className="text-foreground hover:text-primary font-medium flex items-center justify-between"
               >
-                <span>Cart</span>
+                <span>Giỏ hàng</span>
                 {cartItemCount > 0 && (
                   <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {cartItemCount}
@@ -239,10 +239,10 @@ export const Navbar = () => {
               {isAuthenticated ? (
                 <>
                   <Link to="/profile" className="text-foreground hover:text-primary font-medium">
-                    Profile
+                    Hồ sơ
                   </Link>
                   <Link to="/orders" className="text-foreground hover:text-primary font-medium">
-                    Orders
+                    Đơn hàng
                   </Link>
                   <Link to="/reviews" className="text-foreground hover:text-primary font-medium">
                     Đánh giá
@@ -257,12 +257,12 @@ export const Navbar = () => {
                     Điểm tích lũy
                   </Link>
                   <button onClick={handleLogout} className="text-left text-destructive font-medium">
-                    Logout
+                    Đăng xuất
                   </button>
                 </>
               ) : (
                 <Link to="/login" className="text-foreground hover:text-primary font-medium">
-                  Sign In
+                  Đăng nhập
                 </Link>
               )}
             </div>

@@ -262,7 +262,7 @@ const OrdersPage = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'PAID':
+      case 'COMPLETED':
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       case 'CANCELLED':
         return <XCircle className="w-5 h-5 text-destructive" />;
@@ -279,7 +279,7 @@ const OrdersPage = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PAID':
+      case 'COMPLETED':
         return 'bg-green-50 text-green-700 border-green-200';
       case 'CANCELLED':
         return 'bg-red-50 text-red-700 border-red-200';
@@ -298,7 +298,8 @@ const OrdersPage = () => {
     const statusMap: Record<string, string> = {
       PENDING: 'Chờ xác nhận',
       SHIPPING: 'Vận chuyển',
-      PAID: 'Hoàn thành',
+      CONFIRMED: 'Đã xác nhận',
+      COMPLETED: 'Hoàn thành',
       CANCELLED: 'Đã hủy',
       UNPAID: 'Chưa thanh toán',
     };
@@ -394,10 +395,12 @@ const OrdersPage = () => {
                 <div className="w-24 h-24 mx-auto bg-muted rounded-full flex items-center justify-center mb-6">
                   <Package className="w-12 h-12 text-muted-foreground" />
                 </div>
-                <h2 className="text-2xl font-serif font-bold mb-2">No orders yet</h2>
-                <p className="text-muted-foreground mb-6">Start shopping to see your orders here</p>
+                <h2 className="text-2xl font-serif font-bold mb-2">Chưa có đơn hàng nào</h2>
+                <p className="text-muted-foreground mb-6">
+                  Bắt đầu mua sắm để xem đơn hàng của bạn tại đây
+                </p>
                 <Link to="/products">
-                  <Button>Browse Products</Button>
+                  <Button>Xem sản phẩm</Button>
                 </Link>
               </motion.div>
             ) : (

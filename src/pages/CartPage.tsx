@@ -36,8 +36,8 @@ const CartPage = () => {
   const handleRemoveItem = (cartItemId: number) => {
     dispatch(removeFromCart(cartItemId));
     toast({
-      title: 'Item removed',
-      description: 'Item has been removed from your cart',
+      title: 'Xóa sản phẩm',
+      description: 'Sản phẩm đã được xóa khỏi giỏ hàng',
     });
   };
 
@@ -48,8 +48,8 @@ const CartPage = () => {
   const handleClearCart = () => {
     dispatch(clearCart());
     toast({
-      title: 'Cart cleared',
-      description: 'All items have been removed from your cart',
+      title: 'Đã xóa giỏ hàng',
+      description: 'Tất cả sản phẩm đã được xóa khỏi giỏ hàng',
     });
   };
 
@@ -69,12 +69,10 @@ const CartPage = () => {
             <ShoppingBag className="w-12 h-12 text-muted-foreground" />
           </div>
           <div>
-            <h2 className="text-2xl font-serif font-bold mb-2">Your cart is empty</h2>
-            <p className="text-muted-foreground mb-6">Add some products to get started</p>
+            <h2 className="text-2xl font-serif font-bold mb-2">Giỏ hàng của bạn đang trống</h2>
+            <p className="text-muted-foreground mb-6">Thêm sản phẩm để bắt đầu mua sắm</p>
           </div>
-          <Button onClick={() => navigate('/products')}>
-            Continue Shopping
-          </Button>
+          <Button onClick={() => navigate('/products')}>Tiếp tục mua sắm</Button>
         </motion.div>
       </div>
     );
@@ -92,9 +90,9 @@ const CartPage = () => {
               className="flex items-center justify-between"
             >
               <div>
-                <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">Shopping Cart</h1>
+                <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">Giỏ hàng</h1>
                 <p className="text-muted-foreground">
-                  {itemCount} {itemCount === 1 ? 'item' : 'items'} in your cart
+                  {itemCount} {itemCount === 1 ? 'sản phẩm' : 'sản phẩm'} trong giỏ hàng
                 </p>
               </div>
               <button
@@ -102,7 +100,7 @@ const CartPage = () => {
                 className="hidden md:inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
-                Continue Shopping
+                Tiếp tục mua sắm
               </button>
             </motion.div>
           </div>
@@ -116,7 +114,7 @@ const CartPage = () => {
               <div className="flex justify-end mb-4">
                 <Button variant="ghost" size="sm" onClick={handleClearCart}>
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Clear Cart
+                  Xóa giỏ hàng
                 </Button>
               </div>
 
@@ -151,11 +149,12 @@ const CartPage = () => {
                         >
                           {item.product.productName}
                         </Link>
-                        {item.product.discountDetail && item.product.discountDetail.percentage > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            -{item.product.discountDetail.percentage}% OFF
-                          </p>
-                        )}
+                        {item.product.discountDetail &&
+                          item.product.discountDetail.percentage > 0 && (
+                            <p className="text-sm text-destructive mt-1">
+                              -{item.product.discountDetail.percentage}% OFF
+                            </p>
+                          )}
                       </div>
                       <button
                         onClick={() => handleRemoveItem(item.id)}
@@ -190,7 +189,7 @@ const CartPage = () => {
                         </p>
                         {item.quantity > 1 && (
                           <p className="text-sm text-muted-foreground">
-                            {item.product.unitPrice.toLocaleString('vi-VN')}₫ each
+                            {item.product.unitPrice.toLocaleString('vi-VN')}₫ mỗi sản phẩm
                           </p>
                         )}
                       </div>
@@ -203,46 +202,46 @@ const CartPage = () => {
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="bg-card rounded-lg p-6 sticky top-24 space-y-6">
-                <h2 className="text-xl font-serif font-bold">Order Summary</h2>
+                <h2 className="text-xl font-serif font-bold">Tóm tắt đơn hàng</h2>
 
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="text-muted-foreground">Tạm tính</span>
                     <span className="font-medium">{subtotal.toLocaleString('vi-VN')}₫</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shipping</span>
+                    <span className="text-muted-foreground">Phí vận chuyển</span>
                     <span className="font-medium">
-                      {shipping === 0 ? 'FREE' : `${shipping.toLocaleString('vi-VN')}₫`}
+                      {shipping === 0 ? 'MIỄN PHÍ' : `${shipping.toLocaleString('vi-VN')}₫`}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tax</span>
+                    <span className="text-muted-foreground">Thuế</span>
                     <span className="font-medium">{tax.toLocaleString('vi-VN')}₫</span>
                   </div>
                   <div className="border-t border-border pt-3 flex justify-between text-lg">
-                    <span className="font-bold">Total</span>
+                    <span className="font-bold">Tổng cộng</span>
                     <span className="font-bold">{total.toLocaleString('vi-VN')}₫</span>
                   </div>
                 </div>
 
                 {shipping === 0 ? (
                   <div className="bg-accent/50 text-accent-foreground p-3 rounded-md text-sm">
-                    🎉 You got free shipping!
+                    🎉 Bạn được miễn phí vận chuyển!
                   </div>
                 ) : (
                   <div className="bg-muted p-3 rounded-md text-sm text-muted-foreground">
-                    Add {(500000 - subtotal).toLocaleString('vi-VN')}₫ more for free shipping
+                    Thêm {(500000 - subtotal).toLocaleString('vi-VN')}₫ để được miễn phí vận chuyển
                   </div>
                 )}
 
                 <Button onClick={handleCheckout} className="w-full" size="lg">
-                  Proceed to Checkout
+                  Tiến hành thanh toán
                 </Button>
 
                 <Link to="/products">
                   <Button variant="outline" className="w-full">
-                    Continue Shopping
+                    Tiếp tục mua sắm
                   </Button>
                 </Link>
               </div>

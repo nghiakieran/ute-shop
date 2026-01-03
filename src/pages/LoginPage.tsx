@@ -3,7 +3,12 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { loginUser, loginWithGoogle, handleGoogleCallback, resetError } from '@/redux/slices/auth.slice';
+import {
+  loginUser,
+  loginWithGoogle,
+  handleGoogleCallback,
+  resetError,
+} from '@/redux/slices/auth.slice';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Label } from '@/components/Label';
@@ -53,15 +58,15 @@ const LoginPage = () => {
     const newErrors: { email?: string; password?: string } = {};
 
     if (!email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email là bắt buộc';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'Email không hợp lệ';
     }
 
     if (!password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Mật khẩu là bắt buộc';
     } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
 
     setErrors(newErrors);
@@ -77,14 +82,14 @@ const LoginPage = () => {
 
     try {
       await dispatch(loginUser({ email, password })).unwrap();
-      
+
       // Login successful
       toast({
         variant: 'success',
         title: 'Chào mừng bạn đã trở lại',
         description: 'Đăng nhập thành công!',
       });
-      
+
       // Redirect after short delay
       setTimeout(() => {
         navigate(redirectPath, { replace: true });
@@ -109,12 +114,12 @@ const LoginPage = () => {
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to home
+            Quay lại trang chủ
           </Link>
 
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold">Welcome back</h1>
-            <p className="text-neutral-500">Sign in to your account to continue</p>
+            <h1 className="text-4xl font-bold">Chào mừng trở lại</h1>
+            <p className="text-neutral-500">Đăng nhập vào tài khoản của bạn để tiếp tục</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -125,7 +130,7 @@ const LoginPage = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@example.com"
+                  placeholder="ten@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
@@ -133,19 +138,17 @@ const LoginPage = () => {
                   autoComplete="email"
                 />
               </div>
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mật khẩu</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder="Nhập mật khẩu của bạn"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
@@ -153,9 +156,7 @@ const LoginPage = () => {
                   autoComplete="current-password"
                 />
               </div>
-              {errors.password && (
-                <p className="text-sm text-red-600">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
             </div>
 
             <div className="flex items-center justify-between">
@@ -163,12 +164,12 @@ const LoginPage = () => {
                 to="/forgot-password"
                 className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
               >
-                Forgot password?
+                Quên mật khẩu?
               </Link>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </Button>
 
             <div className="relative">
@@ -176,7 +177,7 @@ const LoginPage = () => {
                 <span className="w-full border-t border-neutral-300" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-neutral-500">Or continue with</span>
+                <span className="bg-white px-2 text-neutral-500">Hoặc tiếp tục với</span>
               </div>
             </div>
 
@@ -204,13 +205,13 @@ const LoginPage = () => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Sign in with Google
+              Đăng nhập với Google
             </Button>
 
             <p className="text-center text-sm text-neutral-500">
-              Don't have an account?{' '}
+              Chưa có tài khoản?{' '}
               <Link to="/register" className="text-neutral-900 hover:underline font-medium">
-                Create one
+                Đăng ký ngay
               </Link>
             </p>
           </form>
@@ -235,7 +236,7 @@ const LoginPage = () => {
             transition={{ delay: 0.2, duration: 0.8 }}
             className="text-6xl font-serif font-bold tracking-[0.2em]"
           >
-            ATELIER
+            UTE SHOP
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -243,7 +244,7 @@ const LoginPage = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-xl font-light max-w-md mx-auto leading-relaxed"
           >
-            Timeless European fashion with minimalist elegance
+            Thời trang phong cách Châu Âu với sự tối giản tinh tế
           </motion.p>
         </div>
       </motion.div>

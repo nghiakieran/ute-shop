@@ -123,7 +123,7 @@ const VNPayReturnPage = () => {
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Trạng thái:</span>
                     <span className="font-medium text-green-600">
-                      {paymentResult.bill.status === 'PAID'
+                      {paymentResult.bill.status === 'SUCCESS'
                         ? 'Đã thanh toán'
                         : paymentResult.bill.status}
                     </span>
