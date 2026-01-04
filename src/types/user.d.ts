@@ -4,7 +4,7 @@ type User = {
   email: string;
   phone?: string;
   avatar?: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'moderator' | 'user';
   createdAt: string;
   updatedAt: string;
 };
