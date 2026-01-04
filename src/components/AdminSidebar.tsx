@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,
@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
   SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -23,7 +24,11 @@ import {
   Users,
   ChevronRight,
   CalendarClock,
+  LogOut,
 } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { logoutUser, selectUser } from '@/redux/slices/auth.slice';
+import { useToast } from '@/hooks/useToast';
 
 const menuItems = [
   { title: 'Dashboard', url: '/admin', icon: LayoutDashboard },
@@ -61,6 +66,28 @@ function SidebarHeaderContent({ collapsible }: { collapsible?: boolean }) {
 
 export function AdminSidebar({ collapsible }: { collapsible?: boolean }) {
   const location = useLocation();
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const user = useAppSelector(selectUser);
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap();
+      toast({
+        variant: 'success',
+        title: 'Đăng xuất thành công',
+        description: 'Hẹn gặp lại bạn!',
+      });
+      navigate('/login');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: 'Không thể đăng xuất. Vui lòng thử lại.',
+      });
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -99,6 +126,24 @@ export function AdminSidebar({ collapsible }: { collapsible?: boolean }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={handleLogout}
+              tooltip="Đăng xuất"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4" />
+              <div className="flex flex-col items-start flex-1">
+                <span className="font-medium">{user?.fullName || 'Admin'}</span>
+                <span className="text-xs text-muted-foreground">Đăng xuất</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

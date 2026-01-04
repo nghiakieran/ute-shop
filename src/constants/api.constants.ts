@@ -53,4 +53,8 @@ export const API_ENDPOINTS = {
   UPDATE_COMMENT: '/ute-shop/api/client/comments/:id',
   DELETE_COMMENT: '/ute-shop/api/client/comments/:id',
   GET_MY_COMMENTS: '/ute-shop/api/client/comments/user/my-comments',
+
+  // Admin - User Management
+  GET_ALL_USERS: '/ute-shop/api/admin/users',
+  SEARCH_USERS: '/ute-shop/api/admin/users/search',
 } as const;

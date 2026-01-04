@@ -23,15 +23,20 @@ const LoginPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { loading, error, isAuthenticated, user } = useAppSelector((state) => state.auth);
 
   // Get redirect path from URL params
   const redirectPath = searchParams.get('redirect') || '/';
 
   // Redirect if already authenticated on mount
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(redirectPath, { replace: true });
+    if (isAuthenticated && user) {
+      // Nếu là admin hoặc moderator, redirect về /admin
+      if (user.role === 'admin' || user.role === 'moderator') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate(redirectPath, { replace: true });
+      }
     }
   }, []);
 
@@ -81,7 +86,7 @@ const LoginPage = () => {
     }
 
     try {
-      await dispatch(loginUser({ email, password })).unwrap();
+      const result = await dispatch(loginUser({ email, password })).unwrap();
 
       // Login successful
       toast({
@@ -92,7 +97,11 @@ const LoginPage = () => {
 
       // Redirect after short delay
       setTimeout(() => {
-        navigate(redirectPath, { replace: true });
+        if (result.user.role === 'admin' || result.user.role === 'moderator') {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate(redirectPath, { replace: true });
+        }
       }, 500);
     } catch (err) {
       // Error handling is done in useEffect
