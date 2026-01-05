@@ -176,7 +176,7 @@ export default function Dashboard() {
       </div>
 
       {/* === HÀNG 1: TÀI CHÍNH & TỶ TRỌNG SẢN PHẨM === */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         {/* Biểu đồ Tài chính (Chiếm 2 phần) */}
         <Card className="shadow-card lg:col-span-2">
           <CardHeader>
@@ -200,8 +200,12 @@ export default function Dashboard() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  tickFormatter={(value) => formatCurrency(Number(value))}
+                />
                 <Tooltip
+                  formatter={(value: any) => formatCurrency(Number(value))}
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
@@ -233,7 +237,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Biểu đồ Tỷ trọng (Chiếm 1 phần) */}
-        <Card className="shadow-card lg:col-span-1">
+        {/* <Card className="shadow-card lg:col-span-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5 text-warning" />
@@ -267,7 +271,7 @@ export default function Dashboard() {
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* === HÀNG 2: SẢN PHẨM BÁN CHẠY & KHÁCH HÀNG MỚI === */}
@@ -298,12 +302,15 @@ export default function Dashboard() {
                     <div>
                       <p className="font-medium text-foreground text-sm">{product.name}</p>
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <ShoppingCart className="w-3 h-3" /> {product.sold} bán
+                        <ShoppingCart className="w-3 h-3" />
+                        Số lượng bán: {product.quantitySold}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-success text-sm">{product.revenue}</p>
+                    <p className="font-bold text-success text-sm">
+                      {formatCurrency(Number(product.totalAmount))}
+                    </p>
                   </div>
                 </div>
               ))}

@@ -20,6 +20,7 @@ import {
   UserBasic,
   CreateNotificationEventPayload,
 } from '../../utils/notification.api';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Định nghĩa lại interface cho State form để đồng bộ UI và Logic
 interface EventFormData {
@@ -37,6 +38,8 @@ export const CreateEventForm = () => {
   // --- States cho User Selection ---
   const [users, setUsers] = useState<UserBasic[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [sendToAll, setSendToAll] = useState(false);
 
@@ -50,21 +53,27 @@ export const CreateEventForm = () => {
     imagePreview: null,
   });
 
-  // Load danh sách user (Debounce search)
+  // Load danh sách user (Debounced server search)
   useEffect(() => {
+    let mounted = true;
     const fetchUsers = async () => {
+      setIsSearching(true);
       try {
-        // Giả sử API search trả về rỗng nếu search term rỗng, hoặc trả về list default
-        const result = await notificationAPI.searchUsers(searchTerm);
-        setUsers(result || []);
+        const result = await notificationAPI.searchUsers(debouncedSearchTerm);
+        if (mounted) setUsers(result || []);
       } catch (error) {
         console.error('Lỗi tải user', error);
+        if (mounted) setUsers([]);
+      } finally {
+        if (mounted) setIsSearching(false);
       }
     };
 
-    const timeoutId = setTimeout(fetchUsers, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+    fetchUsers();
+    return () => {
+      mounted = false;
+    };
+  }, [debouncedSearchTerm]);
 
   // Handle thay đổi input text/textarea
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -199,7 +208,11 @@ export const CreateEventForm = () => {
               {!sendToAll && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="relative mb-3">
-                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                    {isSearching ? (
+                      <Loader2 className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 animate-spin" />
+                    ) : (
+                      <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                    )}
                     <input
                       type="text"
                       placeholder="Tìm kiếm theo tên hoặc email..."
