@@ -143,7 +143,7 @@ const WishlistPage = () => {
                   >
                     <img
                       src={
-                        product.images?.[0]?.url ||
+                        product.images?.[0] ||
                         'https://placehold.co/600x800/eeeeee/333333?text=No+Image'
                       }
                       alt={product.productName}
