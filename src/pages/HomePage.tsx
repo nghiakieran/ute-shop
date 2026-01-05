@@ -125,7 +125,7 @@ const HomePage = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-xl md:text-2xl text-white/90 mb-10 font-light"
           >
-            Khám phá sự thanh lịch tối giản với bộ sưu tập tinh té của chúng tôi
+            Khám phá sự thanh lịch tối giản với bộ sưu tập tinh tế của chúng tôi
           </motion.p>
 
           <motion.div
@@ -156,7 +156,7 @@ const HomePage = () => {
               Mua sắm theo danh mục
             </h2>
             <p className="text-muted-foreground text-lg">
-              Khám phá các bộ sưu tập tinh té của chúng tôi
+              Khám phá các bộ sưu tập tinh tế của chúng tôi
             </p>
           </motion.div>
 
