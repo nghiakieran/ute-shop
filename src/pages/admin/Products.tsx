@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo } from 'react'; // THÊM useEffect
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useToast } from '@/hooks/useToast';
+import { deleteProduct } from '@/utils/product.api';
 import {
   Select,
   SelectContent,
@@ -28,6 +31,16 @@ import {
   PaginationPrevious,
   PaginationNext,
 } from '@/components/ui/pagination';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 import { fetchAdminProducts } from '@/redux/slices/admin/productManage.slice';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
@@ -35,12 +48,17 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 export default function Products() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
 
   const { products, meta, loading } = useAppSelector((state) => state.productManage);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 1000);
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const itemsPerPage = meta?.limit || 10;
 
@@ -50,8 +68,8 @@ export default function Products() {
       limit: itemsPerPage,
     };
 
-    if (searchTerm) {
-      filters.search = searchTerm;
+    if (debouncedSearchTerm) {
+      filters.search = debouncedSearchTerm;
     }
 
     if (statusFilter === 'active') {
@@ -61,7 +79,7 @@ export default function Products() {
     }
 
     dispatch(fetchAdminProducts(filters));
-  }, [dispatch, currentPage, searchTerm, statusFilter, itemsPerPage]);
+  }, [dispatch, currentPage, debouncedSearchTerm, statusFilter, itemsPerPage]);
 
   const getStatusBadge = (displayStatus: boolean, quantityStock: number) => {
     if (displayStatus === false) {
@@ -83,6 +101,50 @@ export default function Products() {
     if (page > 0 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmId) return;
+
+    setDeletingId(deleteConfirmId);
+    try {
+      await deleteProduct(deleteConfirmId);
+      toast({
+        title: 'Thành công',
+        description: 'Xóa sản phẩm thành công',
+        variant: 'success',
+      });
+      const filters: { [key: string]: any } = {
+        page: currentPage,
+        limit: itemsPerPage,
+      };
+
+      if (debouncedSearchTerm) {
+        filters.search = debouncedSearchTerm;
+      }
+
+      if (statusFilter === 'active') {
+        filters.displayStatus = true;
+      } else if (statusFilter === 'inactive') {
+        filters.displayStatus = false;
+      }
+
+      dispatch(fetchAdminProducts(filters));
+    } catch (error) {
+      toast({
+        description: 'Xóa sản phẩm thất bại',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingId(null);
+      setIsDeleteDialogOpen(false);
+      setDeleteConfirmId(null);
+    }
+  };
+
+  const openDeleteDialog = (productId: number) => {
+    setDeleteConfirmId(productId);
+    setIsDeleteDialogOpen(true);
   };
 
   const renderTableBody = () => {
@@ -135,22 +197,16 @@ export default function Products() {
                   variant="ghost"
                   size="icon"
                   className="hover:bg-blue-500/10 hover:text-blue-600"
-                  onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                  onClick={() => navigate(`/admin/products/${product.id}`)}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="hover:bg-primary/10 hover:text-primary"
-                  onClick={() => navigate(`/admin/products/${product.id}`)}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
                   className="hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => openDeleteDialog(product.id)}
+                  disabled={deletingId === product.id}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -163,7 +219,7 @@ export default function Products() {
   };
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
+    <div className="p-8 space-y-6 animate-fade-in bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Quản lý sản phẩm</h1>
@@ -205,11 +261,10 @@ export default function Products() {
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-50">
                 <SelectItem value="all">Tất cả</SelectItem>
                 <SelectItem value="active">Đang bán</SelectItem>
                 <SelectItem value="inactive">Ngừng bán</SelectItem>
-                {/* Bạn có thể thêm filter theo tồn kho nếu API hỗ trợ */}
               </SelectContent>
             </Select>
           </div>
@@ -260,6 +315,28 @@ export default function Products() {
           {/* --------------------------- */}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="border-2 border-destructive">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa sản phẩm</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-2 border-destructive">Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="border-2 border-destructive hover:bg-destructive/90"
+              disabled={deletingId !== null}
+            >
+              {deletingId !== null ? 'Đang xóa...' : 'Xóa'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

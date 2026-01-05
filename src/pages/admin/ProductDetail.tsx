@@ -255,7 +255,7 @@ export default function ProductDetail() {
     <div className="p-8 space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/products')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/products/')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -289,7 +289,7 @@ export default function ProductDetail() {
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-50">
+                  <SelectContent>
                     {categories?.map((cat: any) => (
                       <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
                         {cat.categoryName}
@@ -497,7 +497,7 @@ export default function ProductDetail() {
 
       {/* Actions */}
       <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={() => navigate('/products')}>
+        <Button variant="outline" onClick={() => navigate('/admin/products/')}>
           Hủy
         </Button>
         <Button className="gap-2 gradient-primary shadow-elegant" onClick={handleSave}>

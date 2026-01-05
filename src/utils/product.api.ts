@@ -75,3 +75,9 @@ export const getRecentlyViewed = async (limit: number = 10) => {
   });
   return response.data.data;
 };
+
+// Admin API
+export const deleteProduct = async (id: number) => {
+  const response = await apiClient.delete(`/ute-shop/api/admin/products/${id}`);
+  return response.data;
+};
