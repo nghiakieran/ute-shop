@@ -6,18 +6,25 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { fetchCategories, selectCategories } from '@/redux/slices/product.slice';
+import { useAppDispatch } from '@/redux/hooks';
 import { addToCart } from '@/redux/slices/cart.slice';
 import { ProductCard, Button, Loading } from '@/components';
 import { useDebounce } from '@/hooks';
 import { MainLayout } from '@/layouts';
+import { API_ENDPOINTS } from '@/constants';
+import { apiClient } from '@/utils';
 import { filterProducts, FilterProductParams } from '@/utils/product.api';
 import toast from 'react-hot-toast';
 
 const ProductsPage = () => {
   const dispatch = useAppDispatch();
-  const categories = useAppSelector(selectCategories);
+
+  type CategoryOption = {
+    id: number;
+    name: string;
+  };
+
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
 
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
@@ -40,8 +47,29 @@ const ProductsPage = () => {
   });
 
   useEffect(() => {
-    dispatch(fetchCategories());
-  }, [dispatch]);
+    const fetchCategories = async () => {
+      try {
+        const response = await apiClient.get(API_ENDPOINTS.GET_CATEGORIES);
+        const raw = response.data?.data?.categories ?? [];
+
+        const formattedCategories = Array.isArray(raw)
+          ? raw
+              .map((item: any) => ({
+                id: Number(item.categoryId ?? item.id),
+                name: item.categoryName ?? item.name ?? 'Danh mục',
+              }))
+              .filter((item) => Number.isFinite(item.id))
+          : [];
+
+        setCategories(formattedCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        toast.error('Không thể tải danh mục');
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     loadProducts();
@@ -228,11 +256,11 @@ const ProductsPage = () => {
                       <button
                         key={category.id}
                         onClick={() => {
-                          setSelectedCategory(Number(category.id));
+                          setSelectedCategory(category.id);
                           setPagination({ ...pagination, page: 1 });
                         }}
                         className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                          selectedCategory === Number(category.id)
+                          selectedCategory === category.id
                             ? 'bg-primary text-primary-foreground'
                             : 'hover:bg-accent'
                         }`}
