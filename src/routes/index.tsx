@@ -36,6 +36,7 @@ import ProductDetail from '@/pages/admin/ProductDetail';
 import OrderDetail from '@/pages/admin/OrderDetail';
 import CreatePromotion from '@/pages/admin/CreatePromotion';
 import { CreateEventForm } from '@/pages/admin/CreateEvent';
+import ReviewsPage from '@/pages/ReviewsPage';
 
 export const AppRoutes = () => {
   return (
@@ -99,6 +100,14 @@ export const AppRoutes = () => {
           element={
             <AuthGuard>
               <VouchersPage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/reviews"
+          element={
+            <AuthGuard>
+              <ReviewsPage />
             </AuthGuard>
           }
         />
