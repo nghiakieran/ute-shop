@@ -197,7 +197,7 @@ export default function OrderDetail() {
 
       {/* Actions */}
       <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={() => navigate('/orders')}>
+        <Button variant="outline" onClick={() => navigate('/admin/orders')}>
           Hủy
         </Button>
         <Button className="gap-2 gradient-primary shadow-elegant" onClick={handleSave}>
