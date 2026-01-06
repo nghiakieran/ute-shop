@@ -19,6 +19,7 @@ import {
   VNPayReturnPage,
   VouchersPage,
   LoyaltyPointsPage,
+  AboutPage,
 } from '@/pages';
 import LoginSuccessPage from '@/pages/LoginSuccessPage';
 import { AuthGuard, GuestGuard, AdminGuard } from '@/guards';
@@ -44,6 +45,7 @@ export const AppRoutes = () => {
       {/* Public Routes */}
       <Route element={<UserLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:slug" element={<ProductDetailPage />} />
         <Route path="/cart" element={<CartPage />} />

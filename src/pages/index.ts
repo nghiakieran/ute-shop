@@ -16,3 +16,4 @@ export { default as WishlistPage } from './WishlistPage';
 export { default as VNPayReturnPage } from './VNPayReturnPage';
 export { default as VouchersPage } from './VouchersPage';
 export { default as LoyaltyPointsPage } from './LoyaltyPointsPage';
+export { default as AboutPage } from './AboutPage';
