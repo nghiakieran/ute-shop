@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   Table,
   TableBody,
@@ -9,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Percent, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Percent, Loader2, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { apiClient } from '@/utils';
@@ -48,6 +50,8 @@ export default function Promotions() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [promotions, setPromotions] = useState<DiscountCampaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 1000);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -59,10 +63,11 @@ export default function Promotions() {
     try {
       setLoading(true);
 
-      const response = await apiClient.get(`http://localhost:3009/ute-shop/api/admin/discounts`, {
+      const response = await apiClient.get(`http://localhost:8080/ute-shop/api/admin/discounts`, {
         params: {
           page: pagination.page,
           limit: pagination.limit,
+          search: debouncedSearchTerm || undefined,
         },
       });
 
@@ -86,7 +91,7 @@ export default function Promotions() {
 
   useEffect(() => {
     fetchPromotions();
-  }, [pagination.page]);
+  }, [pagination.page, debouncedSearchTerm]);
 
   const handleDelete = async (id: number) => {
     setDeleteId(id);
@@ -97,7 +102,7 @@ export default function Promotions() {
 
     setIsDeleting(true);
     try {
-      await apiClient.delete(`http://localhost:3009/ute-shop/api/admin/discounts/${deleteId}`);
+      await apiClient.delete(`http://localhost:8080/ute-shop/api/admin/discounts/${deleteId}`);
       fetchPromotions();
       toast.success('Đã xóa thành công. Chương trình khuyến mãi đã được xóa khỏi hệ thống.');
     } catch (error) {
@@ -155,7 +160,19 @@ export default function Promotions() {
             Danh sách khuyến mãi
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          <div className="relative">
+            <Input
+              placeholder="Tìm kiếm khuyến mãi..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+              className="pl-10"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          </div>
           <Table>
             <TableHeader>
               <TableRow>

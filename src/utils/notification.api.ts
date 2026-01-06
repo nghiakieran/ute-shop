@@ -45,23 +45,16 @@ export const notificationAPI = {
   },
 
   searchUsers: async (query: string): Promise<UserBasic[]> => {
-    const mockUsers = [
-      { id: 1, fullName: 'Nguyễn Văn A', email: 'vana@example.com' },
-      { id: 2, fullName: 'Trần Thị B', email: 'bibi@example.com' },
-      { id: 3, fullName: 'Lê Văn C', email: 'cle@example.com' },
-      { id: 4, fullName: 'Admin User', email: 'admin@example.com' },
-      { id: 5, fullName: 'Hoàng Long', email: 'long@example.com' },
-    ];
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(
-          mockUsers.filter(
-            (u) =>
-              u.fullName.toLowerCase().includes(query.toLowerCase()) ||
-              u.email.toLowerCase().includes(query.toLowerCase())
-          )
-        );
-      }, 300);
-    });
+    try {
+      const response = await apiClient.get('/ute-shop/api/admin/users/search', {
+        params: { keyword: query },
+      });
+      // assume API returns { data: users }
+      return response.data?.data || [];
+    } catch (error) {
+      // fallback to empty array on error
+      console.error('searchUsers API error', error);
+      return [];
+    }
   },
 };

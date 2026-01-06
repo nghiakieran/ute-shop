@@ -9,9 +9,10 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Search, Package, Save, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useDebounce } from '@/hooks/useDebounce';
 import { apiClient } from '@/utils';
 
-const API_URL = 'http://localhost:3009/ute-shop/api/admin/';
+const API_URL = 'http://localhost:8080/ute-shop/api/admin/';
 
 export default function CreatePromotion() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function CreatePromotion() {
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   const [searchProduct, setSearchProduct] = useState('');
+  const debouncedSearchProduct = useDebounce(searchProduct, 500);
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -42,54 +44,73 @@ export default function CreatePromotion() {
     return date.toISOString().split('T')[0];
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoadingProducts(true);
-      try {
-        const productRes = await apiClient.get(`${API_URL}products`);
-        setProducts(productRes.data.data.data || productRes.data);
+  // Fetch products (server-side search) - does NOT modify selectedProducts
+  const fetchProducts = async () => {
+    setIsLoadingProducts(true);
+    try {
+      const productRes = await apiClient.get(`${API_URL}products`, {
+        params: debouncedSearchProduct ? { search: debouncedSearchProduct } : {},
+      });
+      setProducts(productRes.data.data.data || productRes.data);
+    } catch (error) {
+      console.error('Failed to load products', error);
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: 'Không thể tải danh sách sản phẩm.',
+      });
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
 
-        if (isEditMode) {
-          setIsLoadingDetail(true);
-          const detailRes = await apiClient.get(`${API_URL}discounts/${id}`);
-          const data = detailRes.data.data;
+  // Fetch promotion detail (only in edit mode) and restore selected products
+  const fetchDetail = async () => {
+    if (!isEditMode) return;
+    setIsLoadingDetail(true);
+    try {
+      const detailRes = await apiClient.get(`${API_URL}discounts/${id}`);
+      const data = detailRes.data.data;
 
-          setFormData({
-            name: data.name,
-            description: data.description || '',
-            discount: data.percentage.toString(),
-            startDate: formatDateForInput(data.startDate),
-            endDate: formatDateForInput(data.endDate),
-            isActive: data.active,
-          });
+      setFormData({
+        name: data.name,
+        description: data.description || '',
+        discount: data.percentage.toString(),
+        startDate: formatDateForInput(data.startDate),
+        endDate: formatDateForInput(data.endDate),
+        isActive: data.active,
+      });
 
-          if (data.productIDs) {
-            setSelectedProducts(data.productIDs.map((p: any) => p));
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load data', error);
-        toast({
-          variant: 'destructive',
-          title: 'Lỗi',
-          description: 'Không thể tải dữ liệu.',
-        });
-        // Nếu lỗi khi load detail, quay về trang danh sách
-        if (isEditMode) navigate('/promotions');
-      } finally {
-        setIsLoadingProducts(false);
-        setIsLoadingDetail(false);
+      if (data.productIDs) {
+        setSelectedProducts(data.productIDs.map((p: any) => p));
       }
-    };
+    } catch (error) {
+      console.error('Failed to load detail', error);
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: 'Không thể tải dữ liệu chi tiết.',
+      });
+      if (isEditMode) navigate('/promotions');
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  };
 
-    fetchData();
-  }, [id, isEditMode, toast, navigate]);
+  // Trigger product fetch when debounced search changes
+  useEffect(() => {
+    fetchProducts();
+  }, [debouncedSearchProduct]);
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.productName.toLowerCase().includes(searchProduct.toLowerCase()) ||
-      product.id.toString().toLowerCase().includes(searchProduct.toLowerCase())
-  );
+  // On mount / when entering edit mode, load detail (if editing) and initial products
+  useEffect(() => {
+    fetchDetail();
+    // Also fetch products once on mount (if not already triggered by debounced search)
+    if (!debouncedSearchProduct) fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isEditMode]);
+
+  const filteredProducts = products;
 
   const handleProductToggle = (productId: number) => {
     setSelectedProducts((prev) =>

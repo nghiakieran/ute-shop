@@ -15,7 +15,7 @@ import type { VoucherStatus } from '@/types/review';
 
 const VouchersPage = () => {
   const dispatch = useAppDispatch();
-  const vouchers = useAppSelector(selectVouchers);
+  const vouchers = useAppSelector(selectVouchers) || [];
   const loading = useAppSelector(selectReviewLoading);
   const [filter, setFilter] = useState<'ALL' | VoucherStatus>('ALL');
 
