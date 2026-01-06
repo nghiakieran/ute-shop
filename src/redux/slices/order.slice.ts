@@ -38,7 +38,7 @@ export const orderSlice = createAppSlice({
         params: {
           page?: number;
           limit?: number;
-          status?: 'PENDING' | 'SHIPPING' | 'PAID' | 'CANCELLED';
+          status?: 'PENDING' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED';
           search?: string;
         } = {},
         { rejectWithValue }

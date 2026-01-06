@@ -26,15 +26,17 @@ import { MainLayout } from '@/layouts';
 // ==================================================================
 interface ProductApi {
   id: number;
+  slug?: string;
   productName: string;
   displayStatus: boolean;
   ratingAvg: number;
   originalPrice: number;
   unitPrice: number;
   productStatus: 'ACTIVE' | 'OUT_OF_STOCK';
-  brand: { brandName: string };
-  discountCampaign: { percentage: number };
-  category: { categoryName: string };
+  productSold?: number;
+  brand?: { brandName: string };
+  discountCampaign?: { percentage: number };
+  category?: { categoryName: string };
   images: { url: string }[];
   newArrival?: boolean;
 }
@@ -60,31 +62,21 @@ const HomePage = () => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  const handleAddToCart = async (product: ProductApi) => {
-    try {
-      await dispatch(
-        addToCart({
-          productId: product.id,
-          quantity: 1,
-        })
-      ).unwrap();
+  const handleAddToCart = (product: ProductApi) => {
+    dispatch(
+      addToCart({
+        productId: product.id,
+        quantity: 1,
+      })
+    );
 
-      toast({
-        variant: 'success',
-        title: product.productName,
-        description: 'Đã thêm vào giỏ hàng',
-      });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Lỗi',
-        description: error || 'Thêm vào giỏ hàng thất bại',
-      });
-    }
+    toast({
+      title: 'Thêm vào giỏ hàng thành công',
+      description: `${product.productName} đã được thêm vào giỏ hàng của bạn`,
+    });
   };
 
   const handleAddToWishlist = (product: ProductApi) => {
-    // Sửa kiểu: Product -> ProductApi
     toast({
       title: 'Đã thêm vào danh sách yêu thích',
       description: `${product.productName} đã được thêm vào danh sách yêu thích của bạn`, // Sửa: name -> productName
@@ -119,7 +111,7 @@ const HomePage = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-xl md:text-2xl text-white/90 mb-10 font-light"
           >
-            Khám phá sự thanh lịch tối giản với bộ sưu tập tinh té của chúng tôi
+            Khám phá sự thanh lịch tối giản với bộ sưu tập tinh tế của chúng tôi
           </motion.p>
 
           <motion.div
@@ -150,7 +142,7 @@ const HomePage = () => {
               Mua sắm theo danh mục
             </h2>
             <p className="text-muted-foreground text-lg">
-              Khám phá các bộ sưu tập tinh té của chúng tôi
+              Khám phá các bộ sưu tập tinh tế của chúng tôi
             </p>
           </motion.div>
 

@@ -1,11 +1,17 @@
 import { apiClient } from '@/utils/api.utils';
 import { API_ENDPOINTS } from '@/constants';
-import type { AdminBill, CheckoutData, CreateOrderPayload, GetAdminOrdersParams, GetAdminOrdersResponse } from '@/types/order';
+import type {
+  AdminBill,
+  CheckoutData,
+  CreateOrderPayload,
+  GetAdminOrdersParams,
+  GetAdminOrdersResponse,
+} from '@/types/order';
 
 interface GetOrdersParams {
   page?: number;
   limit?: number;
-  status?: 'PENDING' | 'SHIPPING' | 'PAID' | 'CANCELLED';
+  status?: 'PENDING' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED';
   search?: string;
 }
 

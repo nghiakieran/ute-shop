@@ -63,7 +63,7 @@ export default function Promotions() {
     try {
       setLoading(true);
 
-      const response = await apiClient.get(`http://localhost:8080/ute-shop/api/admin/discounts`, {
+      const response = await apiClient.get('/ute-shop/api/admin/discounts', {
         params: {
           page: pagination.page,
           limit: pagination.limit,
@@ -84,6 +84,8 @@ export default function Promotions() {
       }
     } catch (error) {
       console.error('Failed to fetch promotions:', error);
+      toast.error('Không thể tải danh sách khuyến mãi');
+      setPromotions([]);
     } finally {
       setLoading(false);
     }
@@ -102,7 +104,7 @@ export default function Promotions() {
 
     setIsDeleting(true);
     try {
-      await apiClient.delete(`http://localhost:8080/ute-shop/api/admin/discounts/${deleteId}`);
+      await apiClient.delete(`/ute-shop/api/admin/discounts/${deleteId}`);
       fetchPromotions();
       toast.success('Đã xóa thành công. Chương trình khuyến mãi đã được xóa khỏi hệ thống.');
     } catch (error) {

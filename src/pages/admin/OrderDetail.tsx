@@ -148,7 +148,7 @@ export default function OrderDetail() {
                 </SelectTrigger>
                 <SelectContent className="bg-white">
                   <SelectItem value="pending_payment">Chờ thanh toán</SelectItem>
-                  <SelectItem value="paid">Đã thanh toán</SelectItem>
+                  <SelectItem value="completed">Đã thanh toán</SelectItem>
                 </SelectContent>
               </Select>
             </div>
