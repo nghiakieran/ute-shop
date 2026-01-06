@@ -49,7 +49,7 @@ const ReviewsPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    dispatch(fetchOrders());
+    dispatch(fetchOrders({}));
   }, [dispatch]);
 
   useEffect(() => {
@@ -58,15 +58,22 @@ const ReviewsPage = () => {
     }
   }, [lastReward]);
 
-  // Get products that can be reviewed (from PAID orders)
+  // Get products that can be reviewed (from orders with SUCCESS payment status)
   const getReviewableProducts = (): Array<{ product: LineItem; bill: Bill }> => {
     const products: Array<{ product: LineItem; bill: Bill }> = [];
 
     orders
-      .filter((order) => order.status === 'PAID')
+      .filter((order) =>
+        order.paymentStatus === 'SUCCESS' ||
+        order.status === 'COMPLETED' ||
+        order.status === 'PAID'
+      )
       .forEach((order) => {
         order.items.forEach((item) => {
-          products.push({ product: item, bill: order });
+          // Only include items that haven't been reviewed
+          if (!item.isReviewed) {
+            products.push({ product: item, bill: order });
+          }
         });
       });
 
@@ -98,7 +105,7 @@ const ReviewsPage = () => {
       });
 
       setSelectedProduct(null);
-      dispatch(fetchOrders()); // Refresh orders
+      dispatch(fetchOrders({})); // Refresh orders
     } catch (error: any) {
       toast({
         variant: 'destructive',
