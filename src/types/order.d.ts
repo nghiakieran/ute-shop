@@ -7,8 +7,8 @@ export type Bill = {
   total: number;
   discount: number;
   paymentMethod: 'CASH' | 'CARD' | 'BANKING';
-  status: 'PENDING' | 'SHIPPING' | 'PAID' | 'CANCELLED';
-  paymentStatus?: 'PENDING' | 'PAID' | 'CANCELLED';
+  status: 'PENDING' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED';
+  paymentStatus?: 'PENDING' | 'COMPLETED' | 'CANCELLED';
   billCode: string;
   orderId: number;
   receiverName: string | null;
@@ -103,7 +103,7 @@ export type AdminBill = {
   total: number;
   discount: number;
   paymentMethod: 'CASH' | 'CARD' | 'BANKING';
-  status: 'PENDING' | 'CONFIRMED' | 'SHIPPING' | 'PAID' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'CONFIRMED' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED';
   billCode: string;
   orderId: number;
   receiverName: string;

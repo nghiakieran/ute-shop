@@ -330,7 +330,7 @@ const OrdersPage = () => {
     { value: 'UNPAID', label: 'Chưa thanh toán' },
     { value: 'PENDING', label: 'Chờ xác nhận' },
     { value: 'SHIPPING', label: 'Vận chuyển' },
-    { value: 'PAID', label: 'Hoàn thành' },
+    { value: 'COMPLETED', label: 'Hoàn thành' },
     { value: 'CANCELLED', label: 'Đã hủy' },
   ];
 
@@ -486,7 +486,7 @@ const OrdersPage = () => {
                                     {item.unitPrice.toLocaleString('vi-VN')}₫
                                   </p>
                                 </div>
-                                {order.status === 'PAID' && !item.isReviewed && (
+                                {order.status === 'COMPLETED' && !item.isReviewed && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -496,7 +496,7 @@ const OrdersPage = () => {
                                     Đánh Giá
                                   </Button>
                                 )}
-                                {order.status === 'PAID' && item.isReviewed && (
+                                {order.status === 'COMPLETED' && item.isReviewed && (
                                   <span className="text-xs text-muted-foreground mt-2">
                                     Đã đánh giá
                                   </span>
@@ -559,7 +559,7 @@ const OrdersPage = () => {
                           {/* Action Buttons */}
                           <div className="flex justify-end gap-3">
                             {order.status === 'PENDING' &&
-                              order.paymentStatus !== 'PAID' &&
+                              order.paymentStatus !== 'COMPLETED' &&
                               !(
                                 order.paymentMethod === 'BANKING' &&
                                 order.paymentStatus === 'SUCCESS'
@@ -578,7 +578,9 @@ const OrdersPage = () => {
                                 Thanh toán ngay
                               </Button>
                             )}
-                            {order.status === 'PAID' && <Button variant="default">Mua Lại</Button>}
+                            {order.status === 'COMPLETED' && (
+                              <Button variant="default">Mua Lại</Button>
+                            )}
                           </div>
 
                           {/* Payment Warning for Banking Orders */}

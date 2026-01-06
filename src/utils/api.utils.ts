@@ -3,11 +3,33 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { API_BASE_URL } from '@/constants';
+import { API_BASE_URL, API_ENDPOINTS } from '@/constants';
 import { storageUtils } from '@/utils/storage.utils';
+
+// Utility to decode JWT and get expiration time
+const decodeJWT = (token: string): { exp?: number } => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return {};
+    const decoded = JSON.parse(atob(parts[1]));
+    return decoded;
+  } catch (error) {
+    return {};
+  }
+};
+
+// Check if token is expired or about to expire (within 5 minutes)
+const isTokenExpiredOrExpiringSoon = (token: string, bufferSeconds: number = 300): boolean => {
+  const decoded = decodeJWT(token);
+  if (!decoded.exp) return false;
+
+  const now = Math.floor(Date.now() / 1000);
+  return decoded.exp - now < bufferSeconds;
+};
 
 class ApiClient {
   private client: AxiosInstance;
+  private refreshTokenPromise: Promise<string | null> | null = null;
 
   constructor() {
     this.client = axios.create({
@@ -20,10 +42,31 @@ class ApiClient {
 
     // Request interceptor
     this.client.interceptors.request.use(
-      (config) => {
+      async (config) => {
         const token = storageUtils.getAccessToken();
+        const refreshToken = storageUtils.getRefreshToken();
+
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
+
+          // Proactive refresh: if token is about to expire and we have refresh token, refresh now
+          if (isTokenExpiredOrExpiringSoon(token) && refreshToken) {
+            try {
+              // Avoid multiple simultaneous refresh calls
+              if (!this.refreshTokenPromise) {
+                this.refreshTokenPromise = this.performTokenRefresh(refreshToken);
+              }
+              const newToken = await this.refreshTokenPromise;
+              this.refreshTokenPromise = null;
+
+              if (newToken) {
+                config.headers.Authorization = `Bearer ${newToken}`;
+              }
+            } catch (error) {
+              console.error('Proactive token refresh failed:', error);
+              // Continue with old token, let response interceptor handle 401
+            }
+          }
         }
         return config;
       },
@@ -46,9 +89,12 @@ class ApiClient {
           if (refreshToken) {
             try {
               // Try to refresh token
-              const response = await this.post<{ accessToken: string }>('/auth/refresh', {
-                refreshToken,
-              });
+              const response = await this.post<{ accessToken: string }>(
+                API_ENDPOINTS.REFRESH_TOKEN,
+                {
+                  refreshToken,
+                }
+              );
               const accessToken =
                 response.data.data?.accessToken || (response.data as any).accessToken;
 
@@ -78,6 +124,19 @@ class ApiClient {
         return Promise.reject(this.handleError(error));
       }
     );
+  }
+
+  private async performTokenRefresh(refreshToken: string): Promise<string | null> {
+    const response = await this.post<{ accessToken: string }>(API_ENDPOINTS.REFRESH_TOKEN, {
+      refreshToken,
+    });
+    const accessToken = response.data.data?.accessToken || (response.data as any).accessToken;
+
+    if (accessToken) {
+      storageUtils.setAccessToken(accessToken);
+      return accessToken;
+    }
+    return null;
   }
 
   private handleError(error: AxiosError<ApiError>): Error {

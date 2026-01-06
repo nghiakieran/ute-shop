@@ -30,17 +30,17 @@ const VouchersPage = () => {
     return 'ACTIVE';
   };
 
-  const filteredVouchers = vouchers.filter((voucher) => {
+  const filteredVouchers = (vouchers || []).filter((voucher) => {
     if (filter === 'ALL') return true;
     return getVoucherStatus(voucher) === filter;
   });
 
   const getFilterCount = (status: 'ALL' | VoucherStatus) => {
-    if (status === 'ALL') return vouchers.length;
-    return vouchers.filter((v) => getVoucherStatus(v) === status).length;
+    if (status === 'ALL') return (vouchers || []).length;
+    return (vouchers || []).filter((v) => getVoucherStatus(v) === status).length;
   };
 
-  if (loading && vouchers.length === 0) {
+  if (loading && (!vouchers || vouchers.length === 0)) {
     return <Loading />;
   }
 

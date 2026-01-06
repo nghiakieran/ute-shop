@@ -58,12 +58,12 @@ const ReviewsPage = () => {
     }
   }, [lastReward]);
 
-  // Get products that can be reviewed (from PAID orders)
+  // Get products that can be reviewed (from COMPLETED orders)
   const getReviewableProducts = (): Array<{ product: LineItem; bill: Bill }> => {
     const products: Array<{ product: LineItem; bill: Bill }> = [];
 
     orders
-      .filter((order) => order.status === 'PAID')
+      .filter((order) => order.status === 'COMPLETED')
       .forEach((order) => {
         order.items.forEach((item) => {
           products.push({ product: item, bill: order });
