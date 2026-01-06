@@ -26,15 +26,17 @@ import { MainLayout } from '@/layouts';
 // ==================================================================
 interface ProductApi {
   id: number;
+  slug?: string;
   productName: string;
   displayStatus: boolean;
   ratingAvg: number;
   originalPrice: number;
   unitPrice: number;
   productStatus: 'ACTIVE' | 'OUT_OF_STOCK';
-  brand: { brandName: string };
-  discountCampaign: { percentage: number };
-  category: { categoryName: string };
+  productSold?: number;
+  brand?: { brandName: string };
+  discountCampaign?: { percentage: number };
+  category?: { categoryName: string };
   images: { url: string }[];
   newArrival?: boolean;
 }
@@ -61,36 +63,20 @@ const HomePage = () => {
   }, [dispatch]);
 
   const handleAddToCart = (product: ProductApi) => {
-    // 🚨 QUAN TRỌNG: API danh sách sản phẩm không trả về `sizes` và `colors`.
-    // Logic "Quick Add" (thêm nhanh) không thể thực hiện được.
-    // Chúng ta phải yêu cầu người dùng xem chi tiết.
+    dispatch(
+      addToCart({
+        productId: product.id,
+        quantity: 1,
+      })
+    );
 
-    // const defaultSize =
-    //   product.sizes.find((s: ProductSize) => s.available) || product.sizes[0];
-    // const defaultColor =
-    //   product.colors.find((c: ProductColor) => c.available) ||
-    //   product.colors[0];
-
-    // if (!defaultSize || !defaultColor) { ... }
-
-    // Logic cũ đã bị xóa vì `product.sizes` không tồn tại.
-    // Thay vào đó, chúng ta hiển thị một thông báo:
     toast({
-      variant: 'default',
-      title: 'Vui lòng chọn Size & Màu sắc',
-      description: `Nhấn vào sản phẩm "${product.productName}" để xem chi tiết.`,
-      // Bạn có thể thêm một nút action để điều hướng
-      // action: <ToastAction altText="View" onClick={() => navigate(...)}>View</ToastAction>,
+      title: 'Thêm vào giỏ hàng thành công',
+      description: `${product.productName} đã được thêm vào giỏ hàng của bạn`,
     });
-
-    // Code dispatch (thêm vào giỏ hàng) cũ đã bị xóa.
-    // dispatch(
-    //   addToCart({ ... })
-    // );
   };
 
   const handleAddToWishlist = (product: ProductApi) => {
-    // Sửa kiểu: Product -> ProductApi
     toast({
       title: 'Đã thêm vào danh sách yêu thích',
       description: `${product.productName} đã được thêm vào danh sách yêu thích của bạn`, // Sửa: name -> productName
