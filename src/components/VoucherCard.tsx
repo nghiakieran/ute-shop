@@ -17,9 +17,10 @@ export const VoucherCard = ({ voucher }: VoucherCardProps) => {
   const [copied, setCopied] = useState(false);
 
   const getVoucherStatus = (): VoucherStatus => {
-    if (voucher.isUsed) return 'USED';
+    if (voucher.status === 'USED') return 'USED';
     const isExpired = new Date(voucher.expiryDate) < new Date();
-    if (isExpired) return 'EXPIRED';
+    if (voucher.status === 'EXPIRED' || isExpired) return 'EXPIRED';
+    if (voucher.status === 'INACTIVE') return 'INACTIVE';
     return 'ACTIVE';
   };
 
@@ -42,6 +43,11 @@ export const VoucherCard = ({ voucher }: VoucherCardProps) => {
           text: 'Hết hạn',
           className: 'bg-red-50 text-red-700 border-red-200',
         };
+      case 'INACTIVE':
+        return {
+          text: 'Không hoạt động',
+          className: 'bg-gray-50 text-gray-600 border-gray-200',
+        };
     }
   };
 
@@ -62,10 +68,10 @@ export const VoucherCard = ({ voucher }: VoucherCardProps) => {
   };
 
   const getDiscountText = () => {
-    if (voucher.voucherType === 'PERCENTAGE') {
-      return `Giảm ${voucher.discountValue}%`;
+    if (voucher.type === 'PERCENTAGE') {
+      return `Giảm ${voucher.value ?? 0}%`;
     }
-    return `Giảm ${voucher.discountValue.toLocaleString('vi-VN')}₫`;
+    return `Giảm ${(voucher.value ?? 0).toLocaleString('vi-VN')}₫`;
   };
 
   return (
@@ -86,7 +92,7 @@ export const VoucherCard = ({ voucher }: VoucherCardProps) => {
             <div>
               <h3 className="font-bold text-lg">{getDiscountText()}</h3>
               <p className="text-sm text-muted-foreground">
-                Đơn tối thiểu: {voucher.minOrderValue.toLocaleString('vi-VN')}₫
+                Đơn tối thiểu: {(voucher.minOrderValue ?? 0).toLocaleString('vi-VN')}₫
               </p>
             </div>
           </div>
@@ -129,12 +135,10 @@ export const VoucherCard = ({ voucher }: VoucherCardProps) => {
 
         {/* Details */}
         <div className="space-y-2 text-sm">
-          {voucher.maxDiscountAmount && (
+          {voucher.maxDiscount !== null && voucher.maxDiscount !== undefined && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Giảm tối đa:</span>
-              <span className="font-medium">
-                {voucher.maxDiscountAmount.toLocaleString('vi-VN')}₫
-              </span>
+              <span className="font-medium">{voucher.maxDiscount.toLocaleString('vi-VN')}₫</span>
             </div>
           )}
           <div className="flex justify-between items-center">

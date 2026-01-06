@@ -61,27 +61,27 @@ export interface GetProductReviewsResponse {
  * Voucher Types
  */
 
-export type VoucherType = 'PERCENTAGE' | 'FIXED';
-export type VoucherStatus = 'ACTIVE' | 'USED' | 'EXPIRED';
+export type VoucherType = 'PERCENTAGE' | 'FIXED' | 'FIXED_AMOUNT';
+export type VoucherStatus = 'ACTIVE' | 'USED' | 'EXPIRED' | 'INACTIVE';
 
 export interface Voucher {
   id: number;
-  userId: number;
   code: string;
-  voucherType: VoucherType;
-  discountValue: number;
+  type: VoucherType;
+  value: number;
+  maxDiscount: number | null;
   minOrderValue: number;
-  maxDiscountAmount?: number;
+  status: VoucherStatus;
   expiryDate: string;
-  isUsed: boolean;
-  usedAt?: string;
+  description?: string;
   createdAt: string;
   updatedAt: string;
-  status?: VoucherStatus; // computed based on isUsed and expiryDate
 }
 
 export interface GetMyVouchersResponse {
-  vouchers: Voucher[];
+  data: Voucher[];
+  message: string;
+  status: number;
 }
 
 /**
