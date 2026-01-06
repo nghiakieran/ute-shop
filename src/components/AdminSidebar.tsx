@@ -39,6 +39,7 @@ const menuItems = [
   { title: 'Thương hiệu & Danh mục', url: '/admin/brands-categories', icon: Tag },
   { title: 'Đánh giá', url: '/admin/reviews', icon: Star },
   { title: 'Khuyến mãi', url: '/admin/promotions', icon: Percent },
+  { title: 'Voucher', url: '/admin/vouchers', icon: Tag },
   { title: 'Tin nhắn', url: '/admin/messages', icon: MessageCircle },
   { title: 'Sự kiện', url: '/admin/events', icon: CalendarClock },
 ];
