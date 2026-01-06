@@ -486,7 +486,7 @@ const OrdersPage = () => {
                                     {item.unitPrice.toLocaleString('vi-VN')}₫
                                   </p>
                                 </div>
-                                {order.status === 'COMPLETED' && !item.isReviewed && (
+                                {order.status === 'PAID' && !item.isReviewed && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -496,7 +496,7 @@ const OrdersPage = () => {
                                     Đánh Giá
                                   </Button>
                                 )}
-                                {order.status === 'COMPLETED' && item.isReviewed && (
+                                {(order.paymentStatus === 'SUCCESS' || order.status === 'COMPLETED' || order.status === 'PAID') && item.isReviewed && (
                                   <span className="text-xs text-muted-foreground mt-2">
                                     Đã đánh giá
                                   </span>
@@ -559,7 +559,7 @@ const OrdersPage = () => {
                           {/* Action Buttons */}
                           <div className="flex justify-end gap-3">
                             {order.status === 'PENDING' &&
-                              order.paymentStatus !== 'COMPLETED' &&
+                              order.paymentStatus !== 'PAID' &&
                               !(
                                 order.paymentMethod === 'BANKING' &&
                                 order.paymentStatus === 'SUCCESS'

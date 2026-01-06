@@ -31,6 +31,7 @@ import chatReducer from './slices/chat.slice';
 import { adminProductReducer } from './slices/admin/productManage.slice';
 import { adminBrandsCategorieseducer } from './slices/admin/brandCategoryManage.slice';
 import { adminOrderReducer } from './slices/admin/orderManage.slice';
+import { adminReviewReducer } from './slices/admin/reviewManage.slice';
 
 // Persist config
 const persistConfig = {
@@ -53,6 +54,7 @@ const rootReducer = combineReducers({
   recentlyViewed: recentlyViewedReducer,
   notification: notificationReducer,
   chat: chatReducer,
+  reviewsManage: adminReviewReducer,
   productManage: adminProductReducer,
   brandsCategoriesManage: adminBrandsCategorieseducer,
   orderManage: adminOrderReducer,

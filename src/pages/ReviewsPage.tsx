@@ -66,7 +66,10 @@ const ReviewsPage = () => {
       .filter((order) => order.status === 'COMPLETED')
       .forEach((order) => {
         order.items.forEach((item) => {
-          products.push({ product: item, bill: order });
+          // Only include items that haven't been reviewed
+          if (!item.isReviewed) {
+            products.push({ product: item, bill: order });
+          }
         });
       });
 

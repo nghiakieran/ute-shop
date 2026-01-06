@@ -19,6 +19,7 @@ import {
   VNPayReturnPage,
   VouchersPage,
   LoyaltyPointsPage,
+  AboutPage,
 } from '@/pages';
 import LoginSuccessPage from '@/pages/LoginSuccessPage';
 import { AuthGuard, GuestGuard, AdminGuard } from '@/guards';
@@ -29,6 +30,7 @@ import Users from '@/pages/admin/Users';
 import Promotions from '@/pages/admin/Promotions';
 import BrandsCategories from '@/pages/admin/BrandsCategories';
 import Messages from '@/pages/admin/Messages';
+import AdminReviews from '@/pages/admin/Reviews';
 import VoucherManagement from '@/pages/admin/VoucherManagement';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { UserLayout } from '@/layouts/UserLayout';
@@ -44,6 +46,7 @@ export const AppRoutes = () => {
       {/* Public Routes */}
       <Route element={<UserLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:slug" element={<ProductDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
@@ -135,6 +138,7 @@ export const AppRoutes = () => {
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />
         <Route path="orders" element={<Orders />} />
+        <Route path="reviews" element={<AdminReviews />} />
         <Route path="products/:id" element={<ProductDetail />} />
         <Route path="users" element={<Users />} />
         <Route path="orders/:id" element={<OrderDetail />} />

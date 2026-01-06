@@ -25,6 +25,7 @@ import {
   ChevronRight,
   CalendarClock,
   LogOut,
+  Star,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { logoutUser, selectUser } from '@/redux/slices/auth.slice';
@@ -36,6 +37,7 @@ const menuItems = [
   { title: 'Đơn hàng', url: '/admin/orders', icon: ShoppingCart },
   { title: 'Người dùng', url: '/admin/users', icon: Users },
   { title: 'Thương hiệu & Danh mục', url: '/admin/brands-categories', icon: Tag },
+  { title: 'Đánh giá', url: '/admin/reviews', icon: Star },
   { title: 'Khuyến mãi', url: '/admin/promotions', icon: Percent },
   { title: 'Voucher', url: '/admin/vouchers', icon: Tag },
   { title: 'Tin nhắn', url: '/admin/messages', icon: MessageCircle },
