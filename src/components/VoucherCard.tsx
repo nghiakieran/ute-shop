@@ -138,9 +138,7 @@ export const VoucherCard = ({ voucher }: VoucherCardProps) => {
           {voucher.maxDiscount !== null && voucher.maxDiscount !== undefined && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Giảm tối đa:</span>
-              <span className="font-medium">
-                {voucher.maxDiscount.toLocaleString('vi-VN')}₫
-              </span>
+              <span className="font-medium">{voucher.maxDiscount.toLocaleString('vi-VN')}₫</span>
             </div>
           )}
           <div className="flex justify-between items-center">
