@@ -77,9 +77,9 @@ export const getProductReviews = async (productId: number): Promise<GetProductRe
 /**
  * Get current user's vouchers
  */
-export const getMyVouchers = async (): Promise<GetMyVouchersResponse> => {
+export const getMyVouchers = async (): Promise<GetMyVouchersResponse['data']> => {
   const response = await api.get<GetMyVouchersResponse>(API_ENDPOINTS.GET_MY_VOUCHERS);
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -96,8 +96,10 @@ export const getMyPoints = async (): Promise<GetMyPointsResponse> => {
  * Get current user's reviews (to filter already reviewed products)
  */
 export const getMyReviews = async (): Promise<GetMyReviewsResponse> => {
-  const response = await api.get<{ data: GetMyReviewsResponse['data']; message: string; status: number }>(
-    API_ENDPOINTS.GET_MY_REVIEWS
-  );
+  const response = await api.get<{
+    data: GetMyReviewsResponse['data'];
+    message: string;
+    status: number;
+  }>(API_ENDPOINTS.GET_MY_REVIEWS);
   return { data: response.data.data };
 };

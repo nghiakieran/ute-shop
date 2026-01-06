@@ -171,7 +171,7 @@ export const reviewSlice = createAppSlice({
       })
       .addCase(fetchMyVouchers.fulfilled, (state, action) => {
         state.loading = false;
-        state.vouchers = action.payload.vouchers;
+        state.vouchers = action.payload;
       })
       .addCase(fetchMyVouchers.rejected, (state, action) => {
         state.loading = false;
