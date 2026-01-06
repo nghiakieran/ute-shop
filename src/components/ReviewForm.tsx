@@ -80,15 +80,18 @@ export const ReviewForm = ({
           rows={5}
           required
           disabled={isSubmitting}
-          className="resize-none"
+          className="resize-none min-h-[120px]"
         />
-        <p className="text-xs text-muted-foreground">
+        <p className={cn("text-xs", {
+          "text-muted-foreground": description.length >= 10,
+          "text-destructive": description.length > 0 && description.length < 10,
+        })}>
           Tối thiểu 10 ký tự. Hiện tại: {description.length} ký tự
         </p>
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 justify-end">
+      <div className="flex gap-3 justify-end pt-4 border-t">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Hủy
@@ -97,6 +100,7 @@ export const ReviewForm = ({
         <Button
           type="submit"
           disabled={isSubmitting || !description.trim() || description.length < 10}
+          className="min-w-[120px]"
         >
           {isSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}
         </Button>
