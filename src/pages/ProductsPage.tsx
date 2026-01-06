@@ -9,15 +9,16 @@ import { Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppDispatch } from '@/redux/hooks';
 import { addToCart } from '@/redux/slices/cart.slice';
 import { ProductCard, Button, Loading } from '@/components';
-import { useDebounce } from '@/hooks';
 import { MainLayout } from '@/layouts';
 import { API_ENDPOINTS } from '@/constants';
 import { apiClient } from '@/utils';
 import { filterProducts, FilterProductParams } from '@/utils/product.api';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
 
 const ProductsPage = () => {
   const dispatch = useAppDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   type CategoryOption = {
     id: number;
@@ -26,25 +27,41 @@ const ProductsPage = () => {
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
 
+  // Local state for inputs (not yet applied)
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
-  const [sortBy, setSortBy] = useState<string>('newest');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000000]);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-
-  // Debounce search query and price range with 500ms delay
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const debouncedPriceRange = useDebounce(priceRange, 500);
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchParams.get('search') || '');
+  const [localCategory, setLocalCategory] = useState<number | undefined>(
+    searchParams.get('categoryId') ? Number(searchParams.get('categoryId')) : undefined
+  );
+  const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([
+    Number(searchParams.get('minPrice')) || 0,
+    Number(searchParams.get('maxPrice')) || 50000000,
+  ]);
+  const [localSortBy, setLocalSortBy] = useState(searchParams.get('sortBy') || 'newest');
 
   // API state
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
-    page: 1,
+    page: Number(searchParams.get('page')) || 1,
     limit: 12,
     total: 0,
     totalPages: 0,
   });
+
+  // Sync local state with URL when URL changes (e.g. back button)
+  useEffect(() => {
+    setLocalSearchQuery(searchParams.get('search') || '');
+    setLocalCategory(
+      searchParams.get('categoryId') ? Number(searchParams.get('categoryId')) : undefined
+    );
+    setLocalPriceRange([
+      Number(searchParams.get('minPrice')) || 0,
+      Number(searchParams.get('maxPrice')) || 50000000,
+    ]);
+    setLocalSortBy(searchParams.get('sortBy') || 'newest');
+    // We don't update pagination state here directly, it's updated after fetch
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -54,11 +71,11 @@ const ProductsPage = () => {
 
         const formattedCategories = Array.isArray(raw)
           ? raw
-              .map((item: any) => ({
-                id: Number(item.categoryId ?? item.id),
-                name: item.categoryName ?? item.name ?? 'Danh mục',
-              }))
-              .filter((item) => Number.isFinite(item.id))
+            .map((item: any) => ({
+              id: Number(item.categoryId ?? item.id),
+              name: item.categoryName ?? item.name ?? 'Danh mục',
+            }))
+            .filter((item) => Number.isFinite(item.id))
           : [];
 
         setCategories(formattedCategories);
@@ -73,37 +90,43 @@ const ProductsPage = () => {
 
   useEffect(() => {
     loadProducts();
-  }, [selectedCategory, sortBy, debouncedPriceRange, pagination.page, debouncedSearchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const loadProducts = async () => {
     setLoading(true);
     try {
+      const page = Number(searchParams.get('page')) || 1;
+      const limit = 12;
+      const minPrice = Number(searchParams.get('minPrice')) || 0;
+      const maxPrice = Number(searchParams.get('maxPrice')) || 50000000;
+      const search = searchParams.get('search');
+      const categoryId = searchParams.get('categoryId')
+        ? Number(searchParams.get('categoryId'))
+        : undefined;
+      const sort = searchParams.get('sortBy') || 'newest';
+
       const params: FilterProductParams = {
-        page: pagination.page,
-        limit: pagination.limit,
-        minPrice: debouncedPriceRange[0],
-        maxPrice: debouncedPriceRange[1],
+        page,
+        limit,
+        minPrice,
+        maxPrice,
       };
 
-      if (debouncedSearchQuery) {
-        params.search = debouncedSearchQuery;
-      }
-
-      if (selectedCategory) {
-        params.categoryId = selectedCategory;
-      }
+      if (search) params.search = search;
+      if (categoryId) params.categoryId = categoryId;
 
       // Map sortBy to API format
-      if (sortBy === 'price_asc') {
+      if (sort === 'price_asc') {
         params.sortBy = 'price';
         params.sortOrder = 'ASC';
-      } else if (sortBy === 'price_desc') {
+      } else if (sort === 'price_desc') {
         params.sortBy = 'price';
         params.sortOrder = 'DESC';
-      } else if (sortBy === 'rating') {
+      } else if (sort === 'rating') {
         params.sortBy = 'rating';
         params.sortOrder = 'DESC';
-      } else if (sortBy === 'name') {
+      } else if (sort === 'name') {
         params.sortBy = 'name';
         params.sortOrder = 'ASC';
       } else {
@@ -114,10 +137,10 @@ const ProductsPage = () => {
       const result = await filterProducts(params);
       setProducts(result.data);
       setPagination({
-        page: result.meta.page,
-        limit: result.meta.limit,
-        total: result.meta.total,
-        totalPages: result.meta.totalPages,
+        page: Number(result.meta.page),
+        limit: Number(result.meta.limit),
+        total: Number(result.meta.total),
+        totalPages: Number(result.meta.totalPages),
       });
     } catch (error) {
       console.error('Error loading products:', error);
@@ -125,6 +148,55 @@ const ProductsPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApplyFilters = () => {
+    const params: any = {};
+
+    // Always reset to page 1 when filtering
+    params.page = '1';
+
+    if (localSearchQuery) params.search = localSearchQuery;
+    if (localCategory) params.categoryId = localCategory.toString();
+    if (localPriceRange[0] > 0) params.minPrice = localPriceRange[0].toString();
+    if (localPriceRange[1] < 50000000) params.maxPrice = localPriceRange[1].toString();
+    if (localSortBy !== 'newest') params.sortBy = localSortBy;
+
+    setSearchParams(params);
+    // Scroll to top to see results
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // On mobile, close sidebar
+    setShowFilters(false);
+  };
+
+  const handleClearFilters = () => {
+    setLocalCategory(undefined);
+    setLocalPriceRange([0, 50000000]);
+    setLocalSearchQuery('');
+    setLocalSortBy('newest');
+    setSearchParams({}); // Clear all params, reloading defaults
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const currentParams = Object.fromEntries(searchParams.entries());
+    setSearchParams({ ...currentParams, page: newPage.toString() });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSortChange = (newSort: string) => {
+    setLocalSortBy(newSort);
+    // For sort, we might want to apply immediately or wait for "Filter" button.
+    // User requested "chỗ lọc thì thêm 1 button lọc, khi click thì mới filter".
+    // Usually sort is immediate, but let's keep it strictly manual if it's considered a filter,
+    // OR we can make sort immediate. Sticking to manual for consistency with "chỗ lọc",
+    // BUT usually sort is separate from "Filter sidebar".
+    // Looking at the UI, sort is on top of the grid. It's better UX to be immediate there.
+    // However, if we want to support "click filter to apply", maybe we should include sort there?
+    // Let's make the sort dropdown apply immediately as it's outside the filter sidebar.
+
+    // Actually, let's keep it immediate for the top dropdown to avoid confusion.
+    const currentParams = Object.fromEntries(searchParams.entries());
+    setSearchParams({ ...currentParams, sortBy: newSort, page: '1' });
   };
 
   const handleAddToCart = async (product: any) => {
@@ -136,7 +208,6 @@ const ProductsPage = () => {
         })
       ).unwrap();
 
-      // Custom toast with product image and details
       toast.success(
         (_t: any) => (
           <div className="flex items-center gap-3">
@@ -163,18 +234,6 @@ const ProductsPage = () => {
 
   const handleAddToWishlist = (product: any) => {
     toast.success(`Đã thêm ${product.productName} vào danh sách yêu thích`);
-  };
-
-  const handleClearFilters = () => {
-    setSelectedCategory(undefined);
-    setPriceRange([0, 50000000]);
-    setSearchQuery('');
-    setPagination({ ...pagination, page: 1 });
-  };
-
-  const handlePageChange = (newPage: number) => {
-    setPagination({ ...pagination, page: newPage });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -217,9 +276,8 @@ const ProductsPage = () => {
             <motion.aside
               initial={false}
               animate={{ height: showFilters ? 'auto' : 0 }}
-              className={`lg:w-64 lg:flex-shrink-0 overflow-hidden lg:overflow-visible ${
-                showFilters ? 'block' : 'hidden lg:block'
-              }`}
+              className={`lg:w-64 lg:flex-shrink-0 overflow-hidden lg:overflow-visible ${showFilters ? 'block' : 'hidden lg:block'
+                }`}
             >
               <div className="space-y-6 lg:sticky lg:top-24">
                 {/* Search */}
@@ -228,11 +286,8 @@ const ProductsPage = () => {
                   <input
                     type="text"
                     placeholder="Tìm kiếm sản phẩm..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setPagination({ ...pagination, page: 1 });
-                    }}
+                    value={localSearchQuery}
+                    onChange={(e) => setLocalSearchQuery(e.target.value)}
                     className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
@@ -242,28 +297,20 @@ const ProductsPage = () => {
                   <h3 className="text-lg font-medium mb-4">Danh mục</h3>
                   <div className="space-y-2">
                     <button
-                      onClick={() => {
-                        setSelectedCategory(undefined);
-                        setPagination({ ...pagination, page: 1 });
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                        !selectedCategory ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
-                      }`}
+                      onClick={() => setLocalCategory(undefined)}
+                      className={`w-full text-left px-3 py-2 rounded-md transition-colors ${!localCategory ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
+                        }`}
                     >
                       Tất cả sản phẩm
                     </button>
                     {categories.map((category) => (
                       <button
                         key={category.id}
-                        onClick={() => {
-                          setSelectedCategory(category.id);
-                          setPagination({ ...pagination, page: 1 });
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                          selectedCategory === category.id
-                            ? 'bg-primary text-primary-foreground'
-                            : 'hover:bg-accent'
-                        }`}
+                        onClick={() => setLocalCategory(category.id)}
+                        className={`w-full text-left px-3 py-2 rounded-md transition-colors ${localCategory === category.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-accent'
+                          }`}
                       >
                         {category.name}
                       </button>
@@ -280,27 +327,30 @@ const ProductsPage = () => {
                       min="0"
                       max="50000000"
                       step="100000"
-                      value={priceRange[1]}
-                      onChange={(e) => {
-                        setPriceRange([0, parseInt(e.target.value)]);
-                        setPagination({ ...pagination, page: 1 });
-                      }}
+                      value={localPriceRange[1]}
+                      onChange={(e) =>
+                        setLocalPriceRange([localPriceRange[0], parseInt(e.target.value)])
+                      }
                       className="w-full"
                     />
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{priceRange[0].toLocaleString('vi-VN')}₫</span>
-                      <span>{priceRange[1].toLocaleString('vi-VN')}₫</span>
+                      <span>{localPriceRange[0].toLocaleString('vi-VN')}₫</span>
+                      <span>{localPriceRange[1].toLocaleString('vi-VN')}₫</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Clear Filters */}
-                {(selectedCategory || priceRange[1] !== 50000000 || searchQuery) && (
+                {/* Action Buttons */}
+                <div className="space-y-3 pt-4 border-t">
+                  <Button onClick={handleApplyFilters} className="w-full">
+                    Lọc sản phẩm
+                  </Button>
+
                   <Button variant="outline" onClick={handleClearFilters} className="w-full">
                     <X className="w-4 h-4 mr-2" />
                     Xóa bộ lọc
                   </Button>
-                )}
+                </div>
               </div>
             </motion.aside>
 
@@ -317,11 +367,8 @@ const ProductsPage = () => {
                   </label>
                   <select
                     id="sort"
-                    value={sortBy}
-                    onChange={(e) => {
-                      setSortBy(e.target.value);
-                      setPagination({ ...pagination, page: 1 });
-                    }}
+                    value={localSortBy} // Show local value
+                    onChange={(e) => handleSortChange(e.target.value)}
                     className="border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="newest">Xem nhiều nhất</option>
@@ -334,8 +381,10 @@ const ProductsPage = () => {
               </div>
 
               {/* Loading State */}
-              {loading && products.length === 0 ? (
-                <Loading />
+              {loading ? (
+                <div className="flex justify-center py-20">
+                  <Loading />
+                </div>
               ) : products.length > 0 ? (
                 <>
                   {/* Products Grid */}
@@ -356,7 +405,7 @@ const ProductsPage = () => {
                       <Button
                         variant="outline"
                         onClick={() => handlePageChange(pagination.page - 1)}
-                        disabled={pagination.page === 1}
+                        disabled={pagination.page <= 1}
                       >
                         <ChevronLeft className="w-4 h-4" />
                         Trang trước
@@ -395,7 +444,7 @@ const ProductsPage = () => {
                       <Button
                         variant="outline"
                         onClick={() => handlePageChange(pagination.page + 1)}
-                        disabled={pagination.page === pagination.totalPages}
+                        disabled={pagination.page >= pagination.totalPages}
                       >
                         Trang sau
                         <ChevronRight className="w-4 h-4" />
