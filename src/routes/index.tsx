@@ -29,6 +29,7 @@ import Users from '@/pages/admin/Users';
 import Promotions from '@/pages/admin/Promotions';
 import BrandsCategories from '@/pages/admin/BrandsCategories';
 import Messages from '@/pages/admin/Messages';
+import AdminReviews from '@/pages/admin/Reviews';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { UserLayout } from '@/layouts/UserLayout';
 import ProductDetail from '@/pages/admin/ProductDetail';
@@ -134,6 +135,7 @@ export const AppRoutes = () => {
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />
         <Route path="orders" element={<Orders />} />
+        <Route path="reviews" element={<AdminReviews />} />
         <Route path="products/:id" element={<ProductDetail />} />
         <Route path="users" element={<Users />} />
         <Route path="orders/:id" element={<OrderDetail />} />
