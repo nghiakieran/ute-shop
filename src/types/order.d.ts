@@ -76,6 +76,7 @@ export type CreateOrderPayload = {
   receiverPhone: string;
   shippingAddress: string;
   note?: string;
+  loyaltyPointsUsed?: number;
 };
 
 export type CreateOrderResponse = {

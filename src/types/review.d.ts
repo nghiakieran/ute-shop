@@ -103,3 +103,10 @@ export interface GetMyPointsResponse {
   totalPoints: number;
   transactions: LoyaltyPointTransaction[];
 }
+
+export interface GetMyReviewsResponse {
+  data: Array<{
+    productId: number;
+    billId: number;
+  }>;
+}

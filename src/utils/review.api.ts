@@ -11,6 +11,7 @@ import type {
   GetProductReviewsResponse,
   GetMyVouchersResponse,
   GetMyPointsResponse,
+  GetMyReviewsResponse,
 } from '@/types/review';
 
 const api = axios.create({
@@ -85,6 +86,18 @@ export const getMyVouchers = async (): Promise<GetMyVouchersResponse> => {
  * Get current user's loyalty points and transaction history
  */
 export const getMyPoints = async (): Promise<GetMyPointsResponse> => {
-  const response = await api.get<GetMyPointsResponse>(API_ENDPOINTS.GET_MY_POINTS);
-  return response.data;
+  const response = await api.get<{ data: GetMyPointsResponse; message: string; status: number }>(
+    API_ENDPOINTS.GET_MY_POINTS
+  );
+  return response.data.data;
+};
+
+/**
+ * Get current user's reviews (to filter already reviewed products)
+ */
+export const getMyReviews = async (): Promise<GetMyReviewsResponse> => {
+  const response = await api.get<{ data: GetMyReviewsResponse['data']; message: string; status: number }>(
+    API_ENDPOINTS.GET_MY_REVIEWS
+  );
+  return { data: response.data.data };
 };
