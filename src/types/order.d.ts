@@ -8,7 +8,7 @@ export type Bill = {
   discount: number;
   paymentMethod: 'CASH' | 'CARD' | 'BANKING';
   status: 'PENDING' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED';
-  paymentStatus?: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  paymentStatus?: 'PENDING' | 'SUCCESS' | 'COMPLETED' | 'CANCELLED';
   billCode: string;
   orderId: number;
   receiverName: string | null;

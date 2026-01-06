@@ -29,6 +29,7 @@ import Users from '@/pages/admin/Users';
 import Promotions from '@/pages/admin/Promotions';
 import BrandsCategories from '@/pages/admin/BrandsCategories';
 import Messages from '@/pages/admin/Messages';
+import VoucherManagement from '@/pages/admin/VoucherManagement';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { UserLayout } from '@/layouts/UserLayout';
 import ProductDetail from '@/pages/admin/ProductDetail';
@@ -140,6 +141,7 @@ export const AppRoutes = () => {
         <Route path="promotions" element={<Promotions />} />
         <Route path="promotions/create" element={<CreatePromotion />} />
         <Route path="promotions/edit/:id" element={<CreatePromotion />} />
+        <Route path="vouchers" element={<VoucherManagement />} />
         <Route path="brands-categories" element={<BrandsCategories />} />
         <Route path="messages" element={<Messages />} />
         <Route path="events" element={<CreateEventForm />} />

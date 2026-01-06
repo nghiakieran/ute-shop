@@ -49,7 +49,7 @@ const ReviewsPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    dispatch(fetchOrders());
+    dispatch(fetchOrders({}));
   }, [dispatch]);
 
   useEffect(() => {
@@ -98,7 +98,7 @@ const ReviewsPage = () => {
       });
 
       setSelectedProduct(null);
-      dispatch(fetchOrders()); // Refresh orders
+      dispatch(fetchOrders({})); // Refresh orders
     } catch (error: any) {
       toast({
         variant: 'destructive',
