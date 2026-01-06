@@ -10,6 +10,7 @@ import {
   getProductReviews as getProductReviewsApi,
   getMyVouchers as getMyVouchersApi,
   getMyPoints as getMyPointsApi,
+  getMyReviews as getMyReviewsApi,
 } from '@/utils/review.api';
 import type {
   Review,
@@ -17,6 +18,7 @@ import type {
   CreateReviewResponse,
   Voucher,
   LoyaltyPointTransaction,
+  GetMyReviewsResponse,
 } from '@/types/review';
 
 interface ReviewState {
@@ -37,6 +39,7 @@ interface ReviewState {
     totalPoints: number;
     transactions: LoyaltyPointTransaction[];
   } | null;
+  myReviews: GetMyReviewsResponse['data'] | null; // Danh sách reviews của user để filter
   loading: boolean;
   error: string | null;
   lastReward: CreateReviewResponse['reward'] | null;
@@ -47,6 +50,7 @@ const initialState: ReviewState = {
   reviewStats: null,
   vouchers: [],
   loyaltyPoints: null,
+  myReviews: null,
   loading: false,
   error: null,
   lastReward: null,
@@ -97,6 +101,18 @@ export const fetchMyPoints = createAsyncThunk(
       return response;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch loyalty points');
+    }
+  }
+);
+
+export const fetchMyReviews = createAsyncThunk(
+  'review/fetchMyReviews',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getMyReviewsApi();
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch my reviews');
     }
   }
 );
@@ -179,6 +195,21 @@ export const reviewSlice = createAppSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
+
+    // Fetch my reviews
+    builder
+      .addCase(fetchMyReviews.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMyReviews.fulfilled, (state, action) => {
+        state.loading = false;
+        state.myReviews = action.payload;
+      })
+      .addCase(fetchMyReviews.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
@@ -190,6 +221,7 @@ export const selectReviews = (state: RootState) => state.review.reviews;
 export const selectReviewStats = (state: RootState) => state.review.reviewStats;
 export const selectVouchers = (state: RootState) => state.review.vouchers;
 export const selectLoyaltyPoints = (state: RootState) => state.review.loyaltyPoints;
+export const selectMyReviews = (state: RootState) => state.review.myReviews;
 export const selectReviewLoading = (state: RootState) => state.review.loading;
 export const selectReviewError = (state: RootState) => state.review.error;
 export const selectLastReward = (state: RootState) => state.review.lastReward;

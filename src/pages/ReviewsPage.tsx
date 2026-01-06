@@ -10,8 +10,10 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { selectOrders, fetchOrders } from '@/redux/slices/order.slice';
 import {
   submitReview,
+  fetchMyReviews,
   selectReviewLoading,
   selectLastReward,
+  selectMyReviews,
   clearLastReward,
 } from '@/redux/slices/review.slice';
 import { ReviewForm, Loading } from '@/components';
@@ -41,6 +43,7 @@ const ReviewsPage = () => {
   const orders = useAppSelector(selectOrders);
   const loading = useAppSelector(selectReviewLoading);
   const lastReward = useAppSelector(selectLastReward);
+  const myReviews = useAppSelector(selectMyReviews);
   const [selectedProduct, setSelectedProduct] = useState<{
     product: LineItem;
     billId: number;
@@ -50,6 +53,7 @@ const ReviewsPage = () => {
 
   useEffect(() => {
     dispatch(fetchOrders({}));
+    dispatch(fetchMyReviews());
   }, [dispatch]);
 
   useEffect(() => {
@@ -62,12 +66,24 @@ const ReviewsPage = () => {
   const getReviewableProducts = (): Array<{ product: LineItem; bill: Bill }> => {
     const products: Array<{ product: LineItem; bill: Bill }> = [];
 
+    // Tạo Set để check nhanh xem sản phẩm đã được đánh giá chưa
+    // Key format: "productId-billId"
+    const reviewedSet = new Set<string>();
+    if (myReviews) {
+      myReviews.forEach((review) => {
+        reviewedSet.add(`${review.productId}-${review.billId}`);
+      });
+    }
+
     orders
       .filter((order) => order.status === 'COMPLETED')
       .forEach((order) => {
         order.items.forEach((item) => {
-          // Only include items that haven't been reviewed
-          if (!item.isReviewed) {
+          // Filter: không hiển thị sản phẩm đã được đánh giá
+          const reviewKey = `${item.product.id}-${order.id}`;
+          const isAlreadyReviewed = reviewedSet.has(reviewKey) || item.isReviewed;
+
+          if (!isAlreadyReviewed) {
             products.push({ product: item, bill: order });
           }
         });
@@ -102,6 +118,7 @@ const ReviewsPage = () => {
 
       setSelectedProduct(null);
       dispatch(fetchOrders({})); // Refresh orders
+      dispatch(fetchMyReviews()); // Refresh my reviews để filter đúng
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -172,7 +189,15 @@ const ReviewsPage = () => {
                       <h3 className="font-semibold mb-2 line-clamp-2">
                         {product.product.productName}
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-4">Đơn hàng #{bill.orderId}</p>
+                      <div className="space-y-1 mb-4">
+                        <p className="text-sm text-muted-foreground">Đơn hàng #{bill.orderId}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Mã đơn: {bill.billCode}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Ngày đặt: {new Date(bill.createdAt).toLocaleDateString('vi-VN')}
+                        </p>
+                      </div>
                       <button
                         onClick={() => handleReviewClick(product, bill.id)}
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium transition-colors"
@@ -189,19 +214,21 @@ const ReviewsPage = () => {
 
         {/* Review Dialog */}
         <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Đánh giá sản phẩm</DialogTitle>
               <DialogDescription>{selectedProduct?.product.product.productName}</DialogDescription>
             </DialogHeader>
             {selectedProduct && (
-              <ReviewForm
-                productId={selectedProduct.product.product.id}
-                billId={selectedProduct.billId}
-                onSubmit={handleSubmitReview}
-                onCancel={() => setSelectedProduct(null)}
-                isSubmitting={loading}
-              />
+              <div className="mt-4">
+                <ReviewForm
+                  productId={selectedProduct.product.product.id}
+                  billId={selectedProduct.billId}
+                  onSubmit={handleSubmitReview}
+                  onCancel={() => setSelectedProduct(null)}
+                  isSubmitting={loading}
+                />
+              </div>
             )}
           </DialogContent>
         </Dialog>

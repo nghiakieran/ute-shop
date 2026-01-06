@@ -6,10 +6,11 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CreditCard, Truck, ShieldCheck, CheckCircle2, ArrowLeft, Home } from 'lucide-react';
+import { CreditCard, Truck, ShieldCheck, CheckCircle2, ArrowLeft, Home, Coins } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { getCart, clearCart } from '@/redux/slices/cart.slice';
 import { selectUser } from '@/redux/slices/auth.slice';
+import { fetchMyPoints, selectLoyaltyPoints } from '@/redux/slices/review.slice';
 import { Button, Input, Label, Loading } from '@/components';
 import { MainLayout } from '@/layouts';
 import { useToast } from '@/hooks';
@@ -31,6 +32,7 @@ const CheckoutPage = () => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const user = useAppSelector(selectUser);
+  const loyaltyPoints = useAppSelector(selectLoyaltyPoints);
 
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,6 +40,8 @@ const CheckoutPage = () => {
   const [cardDetails, setCardDetails] = useState(initialCardState);
   const [note, setNote] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [usePoints, setUsePoints] = useState(false);
+  const [pointsToUse, setPointsToUse] = useState(0);
   const [shippingInfo, setShippingInfo] = useState({
     fullName: user?.fullName ?? '',
     phone: user?.phone ?? '',
@@ -58,7 +62,8 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     fetchCheckoutData();
-  }, []);
+    dispatch(fetchMyPoints());
+  }, [dispatch]);
 
   const fetchCheckoutData = async () => {
     try {
@@ -166,6 +171,7 @@ const CheckoutPage = () => {
         receiverPhone: shippingInfo.phone,
         shippingAddress: fullAddress,
         note: note || undefined,
+        loyaltyPointsUsed: usePoints && pointsToUse > 0 ? pointsToUse : undefined,
       };
 
       const response = await createOrder(payload);
@@ -496,11 +502,83 @@ const CheckoutPage = () => {
                       </span>
                     </div>
                   )}
+
+                  {/* Sử dụng điểm tích lũy */}
+                  {loyaltyPoints && loyaltyPoints.totalPoints > 0 && (
+                    <div className="border-t border-border pt-4 mt-4 space-y-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={usePoints}
+                          onChange={(e) => {
+                            setUsePoints(e.target.checked);
+                            if (e.target.checked) {
+                              // Tự động set số điểm tối đa có thể dùng (không vượt quá tổng tiền)
+                              const maxPoints = Math.min(
+                                loyaltyPoints.totalPoints,
+                                Math.floor(checkoutData.total / 1000)
+                              );
+                              setPointsToUse(maxPoints);
+                            } else {
+                              setPointsToUse(0);
+                            }
+                          }}
+                          className="accent-primary"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Coins className="w-4 h-4 text-yellow-500" />
+                          <span className="text-sm font-medium">
+                            Sử dụng điểm tích lũy ({loyaltyPoints.totalPoints.toLocaleString('vi-VN')} điểm)
+                          </span>
+                        </div>
+                      </label>
+                      {usePoints && (
+                        <div className="space-y-2 pl-6">
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor="pointsToUse" className="text-xs text-muted-foreground">
+                              Số điểm muốn dùng (1 điểm = 1,000₫):
+                            </Label>
+                            <Input
+                              id="pointsToUse"
+                              type="number"
+                              min={0}
+                              max={Math.min(
+                                loyaltyPoints.totalPoints,
+                                Math.floor(checkoutData.total / 1000)
+                              )}
+                              value={pointsToUse}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value) || 0;
+                                const maxPoints = Math.min(
+                                  loyaltyPoints.totalPoints,
+                                  Math.floor(checkoutData.total / 1000)
+                                );
+                                setPointsToUse(Math.min(value, maxPoints));
+                              }}
+                              className="w-24 h-8 text-sm"
+                            />
+                          </div>
+                          {pointsToUse > 0 && (
+                            <div className="flex justify-between text-sm text-green-600">
+                              <span>Giảm giá từ điểm:</span>
+                              <span className="font-medium">
+                                -{(pointsToUse * 1000).toLocaleString('vi-VN')}₫
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t border-border pt-3 flex justify-between text-lg">
                   <span className="font-bold">Tổng cộng</span>
-                  <span className="font-bold">{checkoutData.total.toLocaleString('vi-VN')}₫</span>
+                  <span className="font-bold">
+                    {usePoints && pointsToUse > 0
+                      ? (checkoutData.total - pointsToUse * 1000).toLocaleString('vi-VN')
+                      : checkoutData.total.toLocaleString('vi-VN')}₫
+                  </span>
                 </div>
 
                 <div className="bg-accent/30 text-accent-foreground rounded-lg p-3 text-xs flex gap-2 items-start">

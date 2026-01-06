@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
   GET_PRODUCT_REVIEWS: '/ute-shop/api/client/reviews/products/:productId',
   GET_MY_VOUCHERS: '/ute-shop/api/client/reviews/my-vouchers',
   GET_MY_POINTS: '/ute-shop/api/client/reviews/my-points',
+  GET_MY_REVIEWS: '/ute-shop/api/client/reviews/my-reviews',
 
   // Comments
   CREATE_COMMENT: '/ute-shop/api/client/comments',
