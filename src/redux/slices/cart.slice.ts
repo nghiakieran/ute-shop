@@ -186,6 +186,8 @@ export const cartSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.loading = false;
           Object.assign(state, action.payload);
+          state.selectedVoucher = null;
+          state.voucherDiscount = 0;
         },
         rejected: (state, action) => {
           state.loading = false;

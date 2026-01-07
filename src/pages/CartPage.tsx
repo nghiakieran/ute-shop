@@ -44,8 +44,23 @@ const CartPage = () => {
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
 
   useEffect(() => {
+    dispatch(setVoucher(null));
     fetchVouchers();
   }, []);
+
+  // Validate voucher when subtotal changes
+  useEffect(() => {
+    if (selectedVoucher && subtotal < (selectedVoucher.minOrderValue || 0)) {
+      dispatch(setVoucher(null));
+      toast({
+        variant: 'destructive',
+        title: 'Voucher đã bị gỡ',
+        description: `Đơn hàng không đủ điều kiện tối thiểu ${selectedVoucher.minOrderValue?.toLocaleString(
+          'vi-VN'
+        )}đ`,
+      });
+    }
+  }, [subtotal, selectedVoucher, dispatch, toast]);
 
   const fetchVouchers = async () => {
     try {
