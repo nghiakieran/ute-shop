@@ -4,7 +4,6 @@ import type {
   CreateVoucherPayload,
   UpdateVoucherPayload,
   VoucherFilterParams,
-  VoucherStatistics,
   VoucherStatisticsResponse,
   GetVouchersResponse,
 } from '@/types/voucher';
@@ -62,4 +61,21 @@ export const updateVoucherStatus = async (id: number, status: string) => {
 export const updateExpiredVouchers = async () => {
   const response = await apiClient.post(VOUCHER_ENDPOINTS.UPDATE_EXPIRED);
   return response.data;
+};
+
+// Client API
+export const getValidVouchers = async () => {
+  const response = await apiClient.get<{ vouchers: Voucher[] }>('/ute-shop/api/client/vouchers');
+  return response.data.data.vouchers;
+};
+
+export const applyVoucher = async (code: string, orderValue: number) => {
+  const response = await apiClient.post<{ discountAmount: number; voucher: Voucher }>(
+    '/ute-shop/api/client/vouchers/apply',
+    {
+      code,
+      orderValue,
+    }
+  );
+  return response.data.data;
 };

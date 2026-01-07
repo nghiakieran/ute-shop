@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { getCart, clearCart } from '@/redux/slices/cart.slice';
 import { selectUser } from '@/redux/slices/auth.slice';
 import { fetchMyPoints, selectLoyaltyPoints } from '@/redux/slices/review.slice';
+import { selectSelectedVoucher, selectVoucherDiscount } from '@/redux/slices/cart.slice';
 import { Button, Input, Label, Loading } from '@/components';
 import { MainLayout } from '@/layouts';
 import { useToast } from '@/hooks';
@@ -33,6 +34,8 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const user = useAppSelector(selectUser);
   const loyaltyPoints = useAppSelector(selectLoyaltyPoints);
+  const selectedVoucher = useAppSelector(selectSelectedVoucher);
+  const voucherDiscount = useAppSelector(selectVoucherDiscount);
 
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -172,6 +175,7 @@ const CheckoutPage = () => {
         shippingAddress: fullAddress,
         note: note || undefined,
         loyaltyPointsUsed: usePoints && pointsToUse > 0 ? pointsToUse : undefined,
+        voucherCode: selectedVoucher?.code,
       };
 
       const response = await createOrder(payload);
@@ -386,11 +390,10 @@ const CheckoutPage = () => {
                 <div className="p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <label
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        paymentMethod === 'CASH'
-                          ? 'border-primary shadow-sm bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${paymentMethod === 'CASH'
+                        ? 'border-primary shadow-sm bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium">Thanh toán khi nhận hàng</span>
@@ -409,11 +412,10 @@ const CheckoutPage = () => {
                     </label>
 
                     <label
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        paymentMethod === 'BANKING'
-                          ? 'border-primary shadow-sm bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${paymentMethod === 'BANKING'
+                        ? 'border-primary shadow-sm bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium">Chuyển khoản ngân hàng</span>
@@ -502,6 +504,14 @@ const CheckoutPage = () => {
                       </span>
                     </div>
                   )}
+                  {voucherDiscount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Voucher ({selectedVoucher?.code})</span>
+                      <span className="font-medium">
+                        -{voucherDiscount.toLocaleString('vi-VN')}₫
+                      </span>
+                    </div>
+                  )}
 
                   {/* Sử dụng điểm tích lũy */}
                   {loyaltyPoints && loyaltyPoints.totalPoints > 0 && (
@@ -576,8 +586,11 @@ const CheckoutPage = () => {
                   <span className="font-bold">Tổng cộng</span>
                   <span className="font-bold">
                     {usePoints && pointsToUse > 0
-                      ? (checkoutData.total - pointsToUse * 1000).toLocaleString('vi-VN')
-                      : checkoutData.total.toLocaleString('vi-VN')}₫
+                      ? Math.max(0, checkoutData.total - voucherDiscount - pointsToUse * 1000).toLocaleString(
+                        'vi-VN'
+                      )
+                      : Math.max(0, checkoutData.total - voucherDiscount).toLocaleString('vi-VN')}
+                    ₫
                   </span>
                 </div>
 
