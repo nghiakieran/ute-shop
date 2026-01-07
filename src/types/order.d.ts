@@ -77,6 +77,7 @@ export type CreateOrderPayload = {
   shippingAddress: string;
   note?: string;
   loyaltyPointsUsed?: number;
+  voucherCode?: string;
 };
 
 export type CreateOrderResponse = {

@@ -1,4 +1,4 @@
-type Product = {
+export type Product = {
   id: string;
   name: string;
   slug: string;
@@ -20,7 +20,7 @@ type Product = {
   updatedAt: string;
 };
 
-type ProductCategory = {
+export type ProductCategory = {
   id: string;
   name: string;
   slug: string;
@@ -29,14 +29,14 @@ type ProductCategory = {
   parent?: string;
 };
 
-type ProductSize = {
+export type ProductSize = {
   id: string;
   name: string;
   value: string;
   available: boolean;
 };
 
-type ProductColor = {
+export type ProductColor = {
   id: string;
   name: string;
   hex: string;

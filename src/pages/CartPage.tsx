@@ -17,7 +17,13 @@ import {
   removeFromCart,
   updateQuantity,
   clearCart,
+  setVoucher,
+  selectSelectedVoucher,
+  selectVoucherDiscount,
 } from '@/redux/slices/cart.slice';
+import { getValidVouchers, applyVoucher } from '@/utils/voucher.api';
+import type { Voucher } from '@/types/voucher';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components';
 import { useToast } from '@/hooks';
 import { MainLayout } from '@/layouts';
@@ -32,6 +38,63 @@ const CartPage = () => {
   const tax = useAppSelector(selectCartTax);
   const total = useAppSelector(selectCartTotal);
   const itemCount = useAppSelector(selectCartItemCount);
+  const selectedVoucher = useAppSelector(selectSelectedVoucher);
+  const voucherDiscount = useAppSelector(selectVoucherDiscount);
+
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+
+  useEffect(() => {
+    dispatch(setVoucher(null));
+    fetchVouchers();
+  }, []);
+
+  // Validate voucher when subtotal changes
+  useEffect(() => {
+    if (selectedVoucher && subtotal < (selectedVoucher.minOrderValue || 0)) {
+      dispatch(setVoucher(null));
+      toast({
+        variant: 'destructive',
+        title: 'Voucher đã bị gỡ',
+        description: `Đơn hàng không đủ điều kiện tối thiểu ${selectedVoucher.minOrderValue?.toLocaleString(
+          'vi-VN'
+        )}đ`,
+      });
+    }
+  }, [subtotal, selectedVoucher, dispatch, toast]);
+
+  const fetchVouchers = async () => {
+    try {
+      const data = await getValidVouchers();
+      setVouchers(data);
+    } catch (error) {
+      console.error('Failed to fetch vouchers', error);
+    }
+  };
+
+  const handleVoucherChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    if (!code) {
+      dispatch(setVoucher(null));
+      return;
+    }
+
+    try {
+      const result = await applyVoucher(code, subtotal);
+      dispatch(setVoucher({ voucher: result.voucher, discount: result.discountAmount }));
+      toast({
+        title: 'Áp dụng voucher thành công',
+        description: `Đã giảm ${result.discountAmount.toLocaleString('vi-VN')}đ`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Không thể áp dụng voucher',
+        description: error.response?.data?.message || 'Có lỗi xảy ra',
+      });
+      // Reset selection if failed
+      e.target.value = '';
+    }
+  };
 
   const handleRemoveItem = (cartItemId: number) => {
     dispatch(removeFromCart(cartItemId));
@@ -219,6 +282,36 @@ const CartPage = () => {
                     <span className="text-muted-foreground">Thuế</span>
                     <span className="font-medium">{tax.toLocaleString('vi-VN')}₫</span>
                   </div>
+
+                  {/* Voucher Selection */}
+                  <div className="pt-2">
+                    <label className="text-sm font-medium mb-1 block">Mã giảm giá</label>
+                    <select
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      onChange={handleVoucherChange}
+                      value={selectedVoucher?.code || ''}
+                    >
+                      <option value="">Chọn mã giảm giá</option>
+                      {vouchers.map((voucher) => (
+                        <option
+                          key={voucher.id}
+                          value={voucher.code}
+                          disabled={subtotal < (voucher.minOrderValue || 0)}
+                        >
+                          {voucher.code} - Giảm {voucher.type === 'PERCENTAGE' ? voucher.value + '%' : voucher.value.toLocaleString('vi-VN') + 'đ'}
+                          {subtotal < (voucher.minOrderValue || 0) &&
+                            ` (Đơn tối thiểu ${voucher.minOrderValue?.toLocaleString('vi-VN')}đ)`}
+                        </option>
+                      ))}
+                    </select>
+                    {voucherDiscount > 0 && (
+                      <div className="flex justify-between mt-2 text-green-600">
+                        <span className="text-sm">Giảm giá</span>
+                        <span className="font-medium">-{voucherDiscount.toLocaleString('vi-VN')}₫</span>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="border-t border-border pt-3 flex justify-between text-lg">
                     <span className="font-bold">Tổng cộng</span>
                     <span className="font-bold">{total.toLocaleString('vi-VN')}₫</span>

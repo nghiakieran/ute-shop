@@ -32,6 +32,8 @@ interface CartSliceState {
   itemCount: number;
   loading: boolean;
   error: string | null;
+  selectedVoucher: any | null;
+  voucherDiscount: number;
 }
 
 const initialState: CartSliceState = {
@@ -44,6 +46,8 @@ const initialState: CartSliceState = {
   itemCount: 0,
   loading: false,
   error: null,
+  selectedVoucher: null,
+  voucherDiscount: 0,
 };
 
 export const cartSlice = createAppSlice({
@@ -78,10 +82,7 @@ export const cartSlice = createAppSlice({
 
     // ==================== ADD TO CART ====================
     addToCart: create.asyncThunk(
-      async (
-        payload: { productId: number; quantity: number },
-        { rejectWithValue }
-      ) => {
+      async (payload: { productId: number; quantity: number }, { rejectWithValue }) => {
         try {
           const response = await apiClient.post(API_ENDPOINTS.ADD_TO_CART, payload);
           return response.data.data;
@@ -107,10 +108,7 @@ export const cartSlice = createAppSlice({
 
     // ==================== UPDATE QUANTITY ====================
     updateQuantity: create.asyncThunk(
-      async (
-        payload: { cartItemId: number; quantity: number },
-        { rejectWithValue }
-      ) => {
+      async (payload: { cartItemId: number; quantity: number }, { rejectWithValue }) => {
         try {
           const endpoint = API_ENDPOINTS.UPDATE_CART_ITEM.replace(
             ':cartItemId',
@@ -188,6 +186,8 @@ export const cartSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.loading = false;
           Object.assign(state, action.payload);
+          state.selectedVoucher = null;
+          state.voucherDiscount = 0;
         },
         rejected: (state, action) => {
           state.loading = false;
@@ -200,6 +200,18 @@ export const cartSlice = createAppSlice({
     resetError: create.reducer((state) => {
       state.error = null;
     }),
+
+    setVoucher: create.reducer(
+      (state, action: { payload: { voucher: any; discount: number } | null }) => {
+        if (action.payload) {
+          state.selectedVoucher = action.payload.voucher;
+          state.voucherDiscount = action.payload.discount;
+        } else {
+          state.selectedVoucher = null;
+          state.voucherDiscount = 0;
+        }
+      }
+    ),
   }),
 });
 
@@ -211,6 +223,7 @@ export const {
   updateQuantity,
   clearCart,
   resetError,
+  setVoucher,
 } = cartSlice.actions;
 
 // Export selectors
@@ -219,9 +232,14 @@ export const selectCartItems = (state: { cart: CartSliceState }) => state.cart.i
 export const selectCartSubtotal = (state: { cart: CartSliceState }) => state.cart.subtotal;
 export const selectCartShipping = (state: { cart: CartSliceState }) => state.cart.shipping;
 export const selectCartTax = (state: { cart: CartSliceState }) => state.cart.tax;
-export const selectCartTotal = (state: { cart: CartSliceState }) => state.cart.total;
+export const selectCartTotal = (state: { cart: CartSliceState }) =>
+  Math.max(0, state.cart.total - state.cart.voucherDiscount);
 export const selectCartItemCount = (state: { cart: CartSliceState }) => state.cart.itemCount;
 export const selectCartLoading = (state: { cart: CartSliceState }) => state.cart.loading;
 export const selectCartError = (state: { cart: CartSliceState }) => state.cart.error;
+export const selectSelectedVoucher = (state: { cart: CartSliceState }) =>
+  state.cart.selectedVoucher;
+export const selectVoucherDiscount = (state: { cart: CartSliceState }) =>
+  state.cart.voucherDiscount;
 
 export default cartSlice.reducer;
